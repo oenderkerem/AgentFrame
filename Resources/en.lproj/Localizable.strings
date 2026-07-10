@@ -25,6 +25,8 @@
 "display.opacity" = "Opacity";
 "display.screen" = "Screen";
 "display.follow_screen" = "Follow active screen (cursor)";
+"display.live_tracking" = "Move frame in real time as cursor switches screens";
+"display.live_tracking_help" = "When enabled, the frame repositions every 250 ms as you move the cursor between monitors. Disable this on multi-monitor setups if you want to avoid the periodic polling overhead — the frame will then only reposition on the next status change.";
 "display.select_screen" = "Select screen";
 "display.main_screen" = "Main Screen";
 "display.screen_main_suffix" = "Main";
