@@ -23,7 +23,7 @@ final class FrameOverlayManager {
         case .idle:
             stopMouseTracking()
             overlayWindow?.orderOut(nil)
-        case .busy:
+        case .busy, .waiting:
             ensureOverlayWindow()
             overlayWindow?.orderFrontRegardless()
             startMouseTracking()

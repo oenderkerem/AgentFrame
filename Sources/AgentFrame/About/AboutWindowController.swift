@@ -80,6 +80,7 @@ private struct AboutView: View {
                 .fixedSize(horizontal: false, vertical: true)
             VStack(spacing: 8) {
                 statusRow(color: .orange,    icon: "rectangle.fill",           key: "about.state_busy")
+                statusRow(color: .blue,      icon: "ellipsis.rectangle.fill",  key: "about.state_waiting")
                 statusRow(color: .green,     icon: "checkmark.rectangle.fill", key: "about.state_done")
                 statusRow(color: .secondary, icon: "rectangle.dashed",         key: "about.state_idle")
                 statusRow(color: .secondary, icon: "slider.horizontal.3",      key: "about.customize_hint")

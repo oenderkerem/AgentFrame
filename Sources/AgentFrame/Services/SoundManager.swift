@@ -5,9 +5,10 @@ enum SoundManager {
         guard settings.soundEnabled else { return }
         let name: String
         switch status {
-        case .busy: name = settings.busySoundName
-        case .done: name = settings.doneSoundName
-        case .idle: return
+        case .busy:    name = settings.busySoundName
+        case .waiting: name = settings.waitingSoundName
+        case .done:    name = settings.doneSoundName
+        case .idle:    return
         }
         guard name != "None", !name.isEmpty else { return }
         NSSound(named: .init(name))?.play()

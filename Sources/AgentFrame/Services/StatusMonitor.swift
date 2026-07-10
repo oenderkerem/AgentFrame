@@ -111,14 +111,16 @@ final class HTTPStatusServer {
         let parts = first.split(separator: " ")
         guard parts.count >= 2, parts[0] == "POST" else { return nil }
         switch String(parts[1]).trimmingCharacters(in: .whitespaces) {
-        case "/busy":   return .busy
-        case "/done":   return .done
-        case "/idle":   return .idle
+        case "/busy":    return .busy
+        case "/waiting": return .waiting
+        case "/done":    return .done
+        case "/idle":    return .idle
         case "/status":
             let body = request.components(separatedBy: "\r\n\r\n").last ?? ""
-            if body.contains("\"busy\"") { return .busy }
-            if body.contains("\"done\"") { return .done }
-            if body.contains("\"idle\"") { return .idle }
+            if body.contains("\"busy\"")    { return .busy }
+            if body.contains("\"waiting\"") { return .waiting }
+            if body.contains("\"done\"")    { return .done }
+            if body.contains("\"idle\"")    { return .idle }
             return nil
         default: return nil
         }

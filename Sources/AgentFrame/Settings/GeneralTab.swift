@@ -23,6 +23,8 @@ struct GeneralTab: View {
                 if settings.soundEnabled {
                     SoundPicker(label: settings.t("general.sound_busy"),
                                 selection: $settings.busySoundName)
+                    SoundPicker(label: settings.t("general.sound_waiting"),
+                                selection: $settings.waitingSoundName)
                     SoundPicker(label: settings.t("general.sound_done"),
                                 selection: $settings.doneSoundName)
                 }
@@ -65,6 +67,10 @@ struct GeneralTab: View {
                              label: settings.t("display.color_busy"),
                              opacityLabel: settings.t("display.opacity"))
                 }
+
+                ColorRow(colorHex: $settings.waitingColorHex, opacity: $settings.waitingOpacity,
+                         label: settings.t("display.color_waiting"),
+                         opacityLabel: settings.t("display.opacity"))
 
                 ColorRow(colorHex: $settings.doneColorHex, opacity: $settings.doneOpacity,
                          label: settings.t("display.color_done"),

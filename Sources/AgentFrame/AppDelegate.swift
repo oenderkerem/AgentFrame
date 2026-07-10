@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMonitor.onStatusChange = { [weak self] status in
             guard let self else { return }
             let effective: AgentStatus = (status == .busy && !self.settings.busyEnabled) ? .idle : status
+            // Note: .waiting intentionally has no auto-reset — stays until next signal
             DispatchQueue.main.async {
                 self.overlayManager.update(status: effective)
                 self.menuBarController.updateStatus(effective)

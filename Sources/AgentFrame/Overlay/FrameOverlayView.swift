@@ -49,6 +49,10 @@ final class FrameOverlayViewModel: ObservableObject {
             nsColor  = settings.busyNSColor
             opacity  = settings.busyOpacity
             visible  = true
+        case .waiting:
+            nsColor  = settings.waitingNSColor
+            opacity  = settings.waitingOpacity
+            visible  = true
         case .done:
             nsColor  = settings.doneNSColor
             opacity  = settings.doneOpacity

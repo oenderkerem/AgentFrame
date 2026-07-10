@@ -3,6 +3,7 @@
 "general.notifications" = "Benachrichtigungen";
 "general.sound_enabled" = "Sound-Benachrichtigung aktivieren";
 "general.sound_busy" = "Sound: Beschäftigt";
+"general.sound_waiting" = "Sound: Wartet auf Eingabe";
 "general.sound_done" = "Sound: Fertig";
 "general.system" = "System";
 "general.launch_at_login" = "App beim Systemstart öffnen";
@@ -18,6 +19,7 @@
 "display.frame_settings" = "Rahmen";
 "display.busy_enabled" = "Rahmen bei Beschäftigt anzeigen";
 "display.color_busy" = "Farbe Beschäftigt";
+"display.color_waiting" = "Farbe Wartet auf Eingabe";
 "display.color_done" = "Farbe Fertig";
 "display.color" = "Farbe";
 "display.opacity" = "Transparenz";
@@ -63,8 +65,8 @@
 "integration.error_details" = "Details anzeigen";
 "integration.error_hide" = "Details ausblenden";
 "integration.copy_error" = "Fehler kopieren";
-"integration.hook_desc_claude" = "»Automatisch installieren« schreibt zwei Hooks direkt in ~/.claude/settings.json: einen PreToolUse-Hook, der »busy« sendet, sobald Claude ein Tool aufruft — und einen Stop-Hook, der »done« sendet, wenn Claude fertig ist. Die genauen Befehle siehst du im Snippet unten. Bestehende Hooks anderer Apps bleiben unverändert.";
-"integration.hook_desc_codex" = "»Automatisch installieren« setzt die Keys onStart (sendet »busy«) und onFinish (sendet »done«) in ~/.codex/config.json. Die genauen Befehle siehst du im Snippet unten. Andere Einstellungen in der Datei bleiben unverändert.";
+"integration.hook_desc_claude" = "»Automatisch installieren« schreibt drei Hooks in ~/.claude/settings.json: PreToolUse (sendet »busy«), Notification (sendet »waiting« wenn Claude auf deine Eingabe wartet) und Stop (sendet »done«). Die genauen Befehle siehst du im Snippet unten. Bestehende Hooks anderer Apps bleiben unverändert.";
+"integration.hook_desc_codex" = "»Automatisch installieren« setzt die Keys onStart (sendet »busy«) und onFinish (sendet »done«) in ~/.codex/config.json. Codex bietet keinen Notification-Hook — der Wartezustand steht dort nicht zur Verfügung. Andere Einstellungen in der Datei bleiben unverändert.";
 "integration.hook_desc_custom" = "Kopiere den Code unten und füge ihn manuell in die Konfigurationsdatei deines Agenten ein.";
 "integration.mode_file_watch" = "Datei-Überwachung";
 "integration.mode_both" = "Beides";
@@ -89,6 +91,7 @@
 "about.how_it_works" = "So funktioniert es";
 "about.how_desc" = "AgentFrame sitzt in der Menüleiste und wartet auf Signale deines KI-Coding-Agenten. Je nach aktuellem Status des Agenten wird ein farbiger Rahmen um den Bildschirm gezeichnet — so siehst du auf einen Blick, ob dein Agent gerade arbeitet, fertig ist oder wartet.";
 "about.state_busy" = "Beschäftigt — Ein farbiger Rahmen erscheint an den konfigurierten Bildschirmkanten.";
+"about.state_waiting" = "Wartet auf Eingabe — Der Rahmen wechselt zur Wartefarbe, wenn der Agent deine Eingabe braucht.";
 "about.state_done" = "Fertig — Der Rahmen wechselt die Farbe und löst optional einen Vollbild-Flash aus.";
 "about.state_idle" = "Bereit — Der Rahmen verschwindet.";
 "about.http_title" = "HTTP-API";
@@ -96,7 +99,7 @@
 "about.file_title" = "Datei-Überwachung";
 "about.file_desc" = "Alternativ zum HTTP-Server kann dein Agent einfach einen Text in eine Datei schreiben. AgentFrame beobachtet die konfigurierte Datei mit einem OS-Level-File-Watcher (kqueue) und reagiert in Echtzeit — ganz ohne Netzwerk:";
 "about.hooks_title" = "Agenten automatisch verbinden";
-"about.hooks_desc" = "Öffne Einstellungen → Integration und wähle deinen Agenten sowie die Transport-Methode. Ein Klick auf »Automatisch installieren« schreibt die passenden Hooks direkt in die Konfigurationsdatei deines Agenten — kein manuelles Editieren nötig.\n\nClaude Code: AgentFrame trägt einen PreToolUse-Hook (sendet »busy« bei jedem Tool-Aufruf) und einen Stop-Hook (sendet »done« beim Abschluss) in ~/.claude/settings.json ein.\n\nCodex: Die Keys onStart und onFinish werden in ~/.codex/config.json gesetzt. Bestehende Einstellungen bleiben in beiden Fällen unberührt.";
+"about.hooks_desc" = "Öffne Einstellungen → Integration und wähle deinen Agenten sowie die Transport-Methode. Ein Klick auf »Automatisch installieren« schreibt die passenden Hooks direkt in die Konfigurationsdatei deines Agenten — kein manuelles Editieren nötig.\n\nClaude Code: Drei Hooks in ~/.claude/settings.json — PreToolUse (»busy«), Notification (»waiting« wenn Claude auf Eingabe wartet) und Stop (»done«).\n\nCodex: Die Keys onStart (»busy«) und onFinish (»done«) in ~/.codex/config.json. Der Wartezustand ist für Codex nicht verfügbar, da kein Notification-Hook existiert.\n\nBenutzerdefinierte Agenten können alle vier Endpoints direkt aufrufen: /busy, /waiting, /done, /idle.";
 "about.customize_hint" = "Anpassbar — Farben, Rahmendicke, Bildschirmkanten und Flash-Effekt lassen sich in den Einstellungen frei konfigurieren.";
 
 /* Menu Bar */
@@ -113,4 +116,5 @@
 "menu.update_available" = "Update verfügbar: v%@";
 "menu.status_idle" = "AgentFrame — Bereit";
 "menu.status_busy" = "AgentFrame — Beschäftigt";
+"menu.status_waiting" = "AgentFrame — Wartet auf Eingabe";
 "menu.status_done" = "AgentFrame — Fertig";

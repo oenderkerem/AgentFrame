@@ -14,7 +14,7 @@ struct FrameEdges: OptionSet {
 }
 
 enum AgentStatus: String {
-    case idle, busy, done
+    case idle, busy, waiting, done
 }
 
 enum IntegrationMode: Int, CaseIterable {
@@ -44,12 +44,15 @@ enum AgentProvider: Int, CaseIterable {
     }
 
     func hooksSnippet(port: Int, filePath: String, mode: IntegrationMode) -> String {
-        let httpBusy = "curl -s -X POST http://localhost:\(port)/busy"
-        let httpDone = "curl -s -X POST http://localhost:\(port)/done"
-        let fileBusy = "echo busy > \(filePath)"
-        let fileDone = "echo done > \(filePath)"
-        let busyCmd  = (mode == .file) ? fileBusy : httpBusy
-        let doneCmd  = (mode == .file) ? fileDone : httpDone
+        let httpBusy    = "curl -s -X POST http://localhost:\(port)/busy"
+        let httpWaiting = "curl -s -X POST http://localhost:\(port)/waiting"
+        let httpDone    = "curl -s -X POST http://localhost:\(port)/done"
+        let fileBusy    = "echo busy > \(filePath)"
+        let fileWaiting = "echo waiting > \(filePath)"
+        let fileDone    = "echo done > \(filePath)"
+        let busyCmd     = (mode == .file) ? fileBusy    : httpBusy
+        let waitingCmd  = (mode == .file) ? fileWaiting : httpWaiting
+        let doneCmd     = (mode == .file) ? fileDone    : httpDone
 
         switch self {
         case .claudeCode:
@@ -60,6 +63,10 @@ enum AgentProvider: Int, CaseIterable {
                 "PreToolUse": [{
                   "matcher": ".*",
                   "hooks": [{"type": "command", "command": "\(busyCmd)"}]
+                }],
+                "Notification": [{
+                  "matcher": ".*",
+                  "hooks": [{"type": "command", "command": "\(waitingCmd)"}]
                 }],
                 "Stop": [{
                   "matcher": ".*",
@@ -75,17 +82,21 @@ enum AgentProvider: Int, CaseIterable {
               "onStart": "\(busyCmd)",
               "onFinish": "\(doneCmd)"
             }
+            // Note: Codex has no notification hook — waiting state
+            // must be triggered manually via POST /waiting if needed.
             """
         case .custom:
             return """
             // HTTP endpoints (curl or fetch):
-            // Busy : \(httpBusy)
-            // Done : \(httpDone)
-            // Idle : curl -s -X POST http://localhost:\(port)/idle
+            // Busy    : \(httpBusy)
+            // Waiting : \(httpWaiting)
+            // Done    : \(httpDone)
+            // Idle    : curl -s -X POST http://localhost:\(port)/idle
             //
             // File alternative:
-            // Busy : \(fileBusy)
-            // Done : \(fileDone)
+            // Busy    : \(fileBusy)
+            // Waiting : \(fileWaiting)
+            // Done    : \(fileDone)
             """
         }
     }
@@ -136,13 +147,16 @@ final class AppSettings: ObservableObject {
     // Sound
     @Published var soundEnabled: Bool        { didSet { ud.set(soundEnabled,          forKey: "soundEnabled") } }
     @Published var busySoundName: String     { didSet { ud.set(busySoundName,         forKey: "busySoundName") } }
+    @Published var waitingSoundName: String  { didSet { ud.set(waitingSoundName,      forKey: "waitingSoundName") } }
     @Published var doneSoundName: String     { didSet { ud.set(doneSoundName,         forKey: "doneSoundName") } }
 
     // Frame appearance
     @Published var busyEnabled: Bool         { didSet { ud.set(busyEnabled,           forKey: "busyEnabled") } }
     @Published var busyColorHex: String      { didSet { ud.set(busyColorHex,          forKey: "busyColorHex") } }
+    @Published var waitingColorHex: String   { didSet { ud.set(waitingColorHex,       forKey: "waitingColorHex") } }
     @Published var doneColorHex: String      { didSet { ud.set(doneColorHex,          forKey: "doneColorHex") } }
     @Published var busyOpacity: Double       { didSet { ud.set(busyOpacity,           forKey: "busyOpacity") } }
+    @Published var waitingOpacity: Double    { didSet { ud.set(waitingOpacity,        forKey: "waitingOpacity") } }
     @Published var doneOpacity: Double       { didSet { ud.set(doneOpacity,           forKey: "doneOpacity") } }
     @Published var frameEdgesRaw: Int        { didSet { ud.set(frameEdgesRaw,         forKey: "frameEdgesRaw") } }
     @Published var frameThickness: Double    { didSet { ud.set(frameThickness,        forKey: "frameThickness") } }
@@ -189,8 +203,9 @@ final class AppSettings: ObservableObject {
         get { AgentProvider(rawValue: agentProviderRaw) ?? .claudeCode }
         set { agentProviderRaw = newValue.rawValue }
     }
-    var busyNSColor: NSColor { NSColor(hex: busyColorHex) ?? .red }
-    var doneNSColor: NSColor { NSColor(hex: doneColorHex) ?? NSColor(hex: "#00CC44")! }
+    var busyNSColor:    NSColor { NSColor(hex: busyColorHex)    ?? .systemOrange }
+    var waitingNSColor: NSColor { NSColor(hex: waitingColorHex) ?? .systemBlue }
+    var doneNSColor:    NSColor { NSColor(hex: doneColorHex)    ?? .systemGreen }
 
     // MARK: - Hook installation
 
@@ -207,6 +222,13 @@ final class AppSettings: ObservableObject {
         return integrationMode == .file
             ? "echo busy > \(expanded)"
             : "curl -s -X POST http://localhost:\(httpPort)/busy"
+    }
+
+    private func waitingCommand() -> String {
+        let expanded = (statusFilePath as NSString).expandingTildeInPath
+        return integrationMode == .file
+            ? "echo waiting > \(expanded)"
+            : "curl -s -X POST http://localhost:\(httpPort)/waiting"
     }
 
     private func doneCommand() -> String {
@@ -244,6 +266,8 @@ final class AppSettings: ObservableObject {
 
             hooksDict["PreToolUse"] = withAgentFrameEntry(
                 in: (hooksDict["PreToolUse"] as? [[String: Any]]) ?? [], cmd: busyCommand())
+            hooksDict["Notification"] = withAgentFrameEntry(
+                in: (hooksDict["Notification"] as? [[String: Any]]) ?? [], cmd: waitingCommand())
             hooksDict["Stop"] = withAgentFrameEntry(
                 in: (hooksDict["Stop"] as? [[String: Any]]) ?? [], cmd: doneCommand())
             root["hooks"] = hooksDict
@@ -297,11 +321,14 @@ final class AppSettings: ObservableObject {
         languageCode        = storedLang == "de" ? "de" : "en"
         soundEnabled        = d.object(forKey: "soundEnabled")        as? Bool   ?? true
         busySoundName       = d.string(forKey: "busySoundName")                  ?? "Tink"
+        waitingSoundName    = d.string(forKey: "waitingSoundName")               ?? "Ping"
         doneSoundName       = d.string(forKey: "doneSoundName")                  ?? "Glass"
         busyEnabled         = d.object(forKey: "busyEnabled")         as? Bool   ?? true
         busyColorHex        = d.string(forKey: "busyColorHex")                   ?? "#FF4400"
+        waitingColorHex     = d.string(forKey: "waitingColorHex")                ?? "#007AFF"
         doneColorHex        = d.string(forKey: "doneColorHex")                   ?? "#00CC44"
         busyOpacity         = d.object(forKey: "busyOpacity")         as? Double ?? 0.85
+        waitingOpacity      = d.object(forKey: "waitingOpacity")      as? Double ?? 0.85
         doneOpacity         = d.object(forKey: "doneOpacity")         as? Double ?? 0.85
         frameEdgesRaw       = d.object(forKey: "frameEdgesRaw")       as? Int    ?? FrameEdges.all.rawValue
         frameThickness      = d.object(forKey: "frameThickness")      as? Double ?? 8.0
