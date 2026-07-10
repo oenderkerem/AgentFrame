@@ -1,0 +1,28 @@
+# Build artifacts
+.build/
+AgentFrame.app/
+*.o
+*.d
+*.dmg
+.dmg_staging/
+AppIcon.iconset/
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.swiftpm/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,116 @@
+/* General Tab */
+"general.language" = "Language";
+"general.notifications" = "Notifications";
+"general.sound_enabled" = "Enable sound notifications";
+"general.sound_busy" = "Sound: Busy";
+"general.sound_done" = "Sound: Done";
+"general.system" = "System";
+"general.launch_at_login" = "Launch at login";
+"general.preview" = "Preview";
+
+/* Display Tab */
+"display.position" = "Position";
+"display.edge_top" = "Top";
+"display.edge_bottom" = "Bottom";
+"display.edge_left" = "Left";
+"display.edge_right" = "Right";
+"display.thickness" = "Thickness";
+"display.frame_settings" = "Frame";
+"display.busy_enabled" = "Show frame when busy";
+"display.color_busy" = "Busy color";
+"display.color_done" = "Done color";
+"display.color" = "Color";
+"display.opacity" = "Opacity";
+"display.screen" = "Screen";
+"display.follow_screen" = "Follow active screen (cursor)";
+"display.select_screen" = "Select screen";
+"display.main_screen" = "Main Screen";
+"display.screen_main_suffix" = "Main";
+"display.screen_prefix" = "Screen";
+"display.screen_help" = "Choose which screen the frame is drawn on. \"Follow active screen\" moves it automatically to whichever screen the cursor is on.";
+"display.flash" = "Flash on Completion";
+"display.flash_enable" = "Enable flash";
+"display.flash_persistent" = "Persistent until click";
+"display.flash_persistent_help" = "The flash overlay stays visible until you click anywhere — useful if you step away while the agent is running.";
+"display.flash_duration" = "Duration";
+"display.auto_hide" = "Auto-hide frame after done";
+"display.auto_hide_delay" = "Hide after";
+"display.auto_hide_help" = "The frame border automatically returns to idle after the configured delay. When disabled, the done-color border stays until the next status signal arrives.";
+
+/* Settings Tabs */
+"settings.tab_general" = "General";
+"settings.tab_display" = "Display";
+
+/* Integration Tab */
+"integration.server_status" = "Server Status";
+"integration.agent" = "Agent";
+"integration.transport" = "Transport";
+"integration.method" = "Method";
+"integration.file_path" = "File Path";
+"integration.path_placeholder" = "Path";
+"integration.hook_config" = "Hook Configuration";
+"integration.copied" = "✓ Copied";
+"integration.copy_to_clipboard" = "Copy to Clipboard";
+"integration.install_auto" = "Install Automatically";
+"integration.installed" = "Installed: %@";
+"integration.install_not_supported" = "Manual installation required.";
+"integration.apply_restart" = "Apply & Restart";
+"integration.server_running" = "HTTP server running on port %d";
+"integration.server_error" = "HTTP server error: %@";
+"integration.server_starting" = "HTTP server starting…";
+"integration.file_watch_active" = "File watching active";
+"integration.file_watch_error" = "File watching error: %@";
+"integration.error_details" = "Show details";
+"integration.error_hide" = "Hide details";
+"integration.copy_error" = "Copy error";
+"integration.hook_desc_claude" = "»Install Automatically« writes two hooks directly into ~/.claude/settings.json: a PreToolUse hook that sends »busy« whenever Claude calls a tool — and a Stop hook that sends »done« when Claude finishes. The exact commands are shown in the snippet below. Existing hooks from other apps are not affected.";
+"integration.hook_desc_codex" = "»Install Automatically« sets the onStart (sends »busy«) and onFinish (sends »done«) keys in ~/.codex/config.json. The exact commands are shown in the snippet below. Other settings in that file are not affected.";
+"integration.hook_desc_custom" = "Copy the snippet below and add it manually to your agent's configuration file.";
+"integration.mode_file_watch" = "File Watching";
+"integration.mode_both" = "Both";
+"integration.overview_title" = "How does integration work?";
+"integration.overview_desc" = "Your AI agent sends status signals to AgentFrame — for example »busy« when it starts working and »done« when it finishes. AgentFrame reacts immediately and shows the corresponding colored screen frame. You can choose between two transport methods:";
+"integration.transport_http_title" = "HTTP Server";
+"integration.transport_http_desc" = "AgentFrame starts a local web server on your Mac. Your agent sends a simple POST request via curl — no external connections, everything runs locally.";
+"integration.transport_file_title" = "File Watching";
+"integration.transport_file_desc" = "Your agent writes »busy«, »done«, or »idle« into a text file. AgentFrame monitors this file at the OS level and reacts in real time to any change — no network required.";
+"integration.overview_global_hint" = "Set up once — hooks apply globally across all projects and sessions. For Claude Code, the snippet can alternatively be added manually to .claude/settings.json in the project directory to limit the integration to a single project.";
+
+/* Agent Provider */
+"agent.custom" = "Custom";
+
+/* Flash Overlay */
+"flash.close_text" = "Click anywhere to close";
+
+/* About Window */
+"about.support" = "Support on Ko-fi";
+"about.title" = "About AgentFrame";
+"about.subtitle" = "Screen frame indicator for AI coding agents";
+"about.how_it_works" = "How it works";
+"about.how_desc" = "AgentFrame sits in your menu bar and watches for signals from your AI coding agent. Depending on the agent's current state, it draws a colored border around your screen — so you always know at a glance whether your agent is working, done, or idle.";
+"about.state_busy" = "Busy — A colored frame appears at the screen edges you configured.";
+"about.state_done" = "Done — The frame switches to the done color and optionally triggers a full-screen flash.";
+"about.state_idle" = "Idle — The frame disappears.";
+"about.http_title" = "HTTP API";
+"about.http_desc" = "AgentFrame starts a local HTTP server (default port 7842). Your agent sends a POST request to signal its state — no library or SDK required, a plain curl call is enough:";
+"about.file_title" = "File Watching";
+"about.file_desc" = "As an alternative to the HTTP server, your agent can simply write a word into a text file. AgentFrame monitors the configured file using an OS-level file watcher (kqueue) and reacts in real time — no network connection needed:";
+"about.hooks_title" = "Connecting your agent automatically";
+"about.hooks_desc" = "Open Settings → Integration and choose your agent and transport method. One click on »Install Automatically« writes the right hooks directly into your agent's configuration file — no manual editing required.\n\nClaude Code: AgentFrame adds a PreToolUse hook (sends »busy« on every tool call) and a Stop hook (sends »done« on completion) to ~/.claude/settings.json.\n\nCodex: The onStart and onFinish keys are set in ~/.codex/config.json. Existing settings are left untouched in both cases.";
+"about.customize_hint" = "Customizable — Colors, frame thickness, screen edges, and the flash effect can all be configured in Settings.";
+
+/* Menu Bar */
+"menu.server_port_in_use" = "⚠ Port %d in use – Open Settings";
+"menu.server_starting_warn" = "⚠ HTTP server starting…";
+"menu.test_busy" = "Test: Busy";
+"menu.test_done" = "Test: Done";
+"menu.test_idle" = "Test: Idle";
+"menu.about" = "About";
+"menu.settings" = "Settings…";
+"menu.quit" = "Quit";
+"menu.server_port_unavailable" = "Port %d unavailable";
+"menu.server_starting" = "Server starting…";
+"menu.update_available" = "Update available: v%@";
+"menu.status_idle" = "AgentFrame — Ready";
+"menu.status_busy" = "AgentFrame — Busy";
+"menu.status_done" = "AgentFrame — Done";
