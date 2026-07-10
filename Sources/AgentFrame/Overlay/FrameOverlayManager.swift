@@ -2,11 +2,12 @@ import AppKit
 import SwiftUI
 
 final class FrameOverlayManager {
-    private var overlayWindow: NSWindow?
-    private var viewModel     = FrameOverlayViewModel()
-    private let flashCtrl     = FlashWindowController()
-    private let settings:       AppSettings
-    private var currentStatus:  AgentStatus = .idle
+    private var overlayWindow:      NSWindow?
+    private var viewModel           = FrameOverlayViewModel()
+    private let flashCtrl           = FlashWindowController()
+    private let settings:             AppSettings
+    private var currentStatus:        AgentStatus = .idle
+    private var mouseTrackingTimer:   DispatchSourceTimer?
 
     init(settings: AppSettings) {
         self.settings = settings
@@ -20,13 +21,16 @@ final class FrameOverlayManager {
 
         switch status {
         case .idle:
+            stopMouseTracking()
             overlayWindow?.orderOut(nil)
         case .busy:
             ensureOverlayWindow()
             overlayWindow?.orderFrontRegardless()
+            startMouseTracking()
         case .done:
             ensureOverlayWindow()
             overlayWindow?.orderFrontRegardless()
+            startMouseTracking()
             if settings.flashEnabled {
                 let scr = targetScreen()
                 flashCtrl.show(
@@ -41,11 +45,13 @@ final class FrameOverlayManager {
     }
 
     func recreateWindows() {
+        stopMouseTracking()
         overlayWindow?.close()
         overlayWindow = nil
         if currentStatus != .idle {
             ensureOverlayWindow()
             overlayWindow?.orderFrontRegardless()
+            startMouseTracking()
         }
     }
 
@@ -88,5 +94,27 @@ final class FrameOverlayManager {
 
     private func moveOverlayToScreen(_ screen: NSScreen) {
         overlayWindow?.setFrame(screen.frame, display: true)
+    }
+
+    private func startMouseTracking() {
+        stopMouseTracking()
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(250))
+        timer.setEventHandler { [weak self] in
+            guard let self, self.settings.followActiveScreen, self.currentStatus != .idle else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                let screen = self.targetScreen()
+                guard self.overlayWindow?.frame != screen.frame else { return }
+                self.moveOverlayToScreen(screen)
+            }
+        }
+        timer.resume()
+        mouseTrackingTimer = timer
+    }
+
+    private func stopMouseTracking() {
+        mouseTrackingTimer?.cancel()
+        mouseTrackingTimer = nil
     }
 }
