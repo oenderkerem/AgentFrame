@@ -4,6 +4,7 @@ import ServiceManagement
 struct GeneralTab: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var statusMonitor: StatusMonitor
+    @State private var screens = NSScreen.screens
 
     var body: some View {
         Form {
@@ -118,7 +119,7 @@ struct GeneralTab: View {
                     Picker(settings.t("display.select_screen"),
                            selection: $settings.selectedScreenIndex) {
                         Text(settings.t("display.main_screen")).tag(-1)
-                        ForEach(NSScreen.screens.indices, id: \.self) { i in
+                        ForEach(screens.indices, id: \.self) { i in
                             Text(screenLabel(for: i)).tag(i)
                         }
                     }
@@ -139,10 +140,15 @@ struct GeneralTab: View {
         }
         .formStyle(.grouped)
         .padding()
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.didChangeScreenParametersNotification)
+        ) { _ in
+            screens = NSScreen.screens
+        }
     }
 
     private func screenLabel(for index: Int) -> String {
-        let s = NSScreen.screens[index]
+        let s = screens[index]
         let main = s == NSScreen.main ? " (\(settings.t("display.screen_main_suffix")))" : ""
         let r = s.frame
         return "\(settings.t("display.screen_prefix")) \(index + 1)\(main) — \(Int(r.width))×\(Int(r.height))"
