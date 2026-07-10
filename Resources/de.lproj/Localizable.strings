@@ -25,6 +25,8 @@
 "display.opacity" = "Transparenz";
 "display.screen" = "Bildschirm";
 "display.follow_screen" = "Aktiven Bildschirm folgen (Mauszeiger)";
+"display.live_tracking" = "Rahmen folgt Maus in Echtzeit";
+"display.live_tracking_help" = "Wenn aktiv, wird der Rahmen alle 250 ms neu positioniert, sobald der Mauszeiger den Bildschirm wechselt. Deaktiviere diese Option bei mehreren Monitoren, falls du eine unnötige CPU-Last vermeiden möchtest — der Rahmen springt dann nur beim nächsten Statuswechsel auf den richtigen Bildschirm.";
 "display.select_screen" = "Bildschirm auswählen";
 "display.main_screen" = "Hauptbildschirm";
 "display.screen_main_suffix" = "Haupt";

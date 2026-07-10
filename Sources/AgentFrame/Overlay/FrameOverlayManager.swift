@@ -98,10 +98,12 @@ final class FrameOverlayManager {
 
     private func startMouseTracking() {
         stopMouseTracking()
+        guard settings.liveMouseTracking else { return }
         let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
         timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(250))
         timer.setEventHandler { [weak self] in
-            guard let self, self.settings.followActiveScreen, self.currentStatus != .idle else { return }
+            guard let self, self.settings.followActiveScreen,
+                  self.settings.liveMouseTracking, self.currentStatus != .idle else { return }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 let screen = self.targetScreen()

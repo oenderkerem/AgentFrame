@@ -121,6 +121,15 @@ struct GeneralTab: View {
                     .fixedSize(horizontal: false, vertical: true)
                 
                 Toggle(settings.t("display.follow_screen"), isOn: $settings.followActiveScreen)
+                if settings.followActiveScreen {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Toggle(settings.t("display.live_tracking"), isOn: $settings.liveMouseTracking)
+                        Text(settings.t("display.live_tracking_help"))
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
                 if !settings.followActiveScreen {
                     Picker(settings.t("display.select_screen"),
                            selection: $settings.selectedScreenIndex) {

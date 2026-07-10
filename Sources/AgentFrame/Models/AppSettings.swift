@@ -167,6 +167,7 @@ final class AppSettings: ObservableObject {
     // Display
     @Published var selectedScreenIndex: Int  { didSet { ud.set(selectedScreenIndex,   forKey: "selectedScreenIndex") } }
     @Published var followActiveScreen: Bool  { didSet { ud.set(followActiveScreen,    forKey: "followActiveScreen") } }
+    @Published var liveMouseTracking: Bool   { didSet { ud.set(liveMouseTracking,     forKey: "liveMouseTracking") } }
 
     // Flash
     @Published var flashEnabled: Bool        { didSet { ud.set(flashEnabled,          forKey: "flashEnabled") } }
@@ -335,6 +336,7 @@ final class AppSettings: ObservableObject {
         launchAtLogin       = d.object(forKey: "launchAtLogin")       as? Bool   ?? false
         selectedScreenIndex = d.object(forKey: "selectedScreenIndex") as? Int    ?? -1
         followActiveScreen  = d.object(forKey: "followActiveScreen")  as? Bool   ?? false
+        liveMouseTracking   = d.object(forKey: "liveMouseTracking")   as? Bool   ?? true
         flashEnabled        = d.object(forKey: "flashEnabled")        as? Bool   ?? true
         flashDuration       = d.object(forKey: "flashDuration")       as? Double ?? 1.5
         flashPersistent     = d.object(forKey: "flashPersistent")     as? Bool   ?? false
