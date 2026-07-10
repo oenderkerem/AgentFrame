@@ -23,6 +23,7 @@ final class UpdateChecker: ObservableObject {
     }
 
     private func check() {
+        guard !currentVersion.contains("dev") else { return }
         guard let url = URL(string: Self.apiURL) else { return }
         var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
         req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")

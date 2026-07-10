@@ -35,6 +35,7 @@ install: build
 	@echo "✓ In /Applications/ installiert"
 
 release: build
+	codesign --force --deep --sign - $(APP)
 	rm -rf $(DMG_STAGING) $(DMG)
 	mkdir -p $(DMG_STAGING)
 	cp -r $(APP) $(DMG_STAGING)/
