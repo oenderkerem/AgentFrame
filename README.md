@@ -89,6 +89,7 @@ Hooks are installed **once globally** and apply to all projects and sessions aut
 | Hook | When it fires | Signal sent |
 |---|---|---|
 | `PreToolUse` | Before Claude uses any tool | `/busy` → frame appears |
+| `Notification` | When Claude is waiting for your input | `/waiting` → frame switches to waiting color |
 | `Stop` | When Claude finishes its turn | `/done` → color switches + flash |
 
 AgentFrame also shows a ready-to-copy snippet in **Settings → Integration**.
@@ -118,6 +119,8 @@ Or add manually to `~/.codex/config.json`:
 }
 ```
 
+> **Note:** Codex has no notification hook, so the waiting state (`/waiting`) is not available via auto-install for Codex.
+
 ---
 
 ## HTTP API
@@ -126,9 +129,10 @@ Any agent can send signals via HTTP — no dependency on Claude Code.
 
 ```
 POST http://localhost:<port>/busy              →  frame appears (busy color)
+POST http://localhost:<port>/waiting           →  frame switches to waiting color
 POST http://localhost:<port>/done              →  frame appears (done color) + flash
 POST http://localhost:<port>/idle              →  frame disappears
-POST http://localhost:<port>/status            →  body: {"status":"busy|done|idle"}
+POST http://localhost:<port>/status            →  body: {"status":"busy|waiting|done|idle"}
 ```
 
 The port defaults to `7842` and can be changed in **Settings → Integration**.

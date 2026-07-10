@@ -3,6 +3,7 @@
 "general.notifications" = "Notifications";
 "general.sound_enabled" = "Enable sound notifications";
 "general.sound_busy" = "Sound: Busy";
+"general.sound_waiting" = "Sound: Waiting for Input";
 "general.sound_done" = "Sound: Done";
 "general.system" = "System";
 "general.launch_at_login" = "Launch at login";
@@ -18,6 +19,7 @@
 "display.frame_settings" = "Frame";
 "display.busy_enabled" = "Show frame when busy";
 "display.color_busy" = "Busy color";
+"display.color_waiting" = "Waiting color";
 "display.color_done" = "Done color";
 "display.color" = "Color";
 "display.opacity" = "Opacity";
@@ -63,8 +65,8 @@
 "integration.error_details" = "Show details";
 "integration.error_hide" = "Hide details";
 "integration.copy_error" = "Copy error";
-"integration.hook_desc_claude" = "»Install Automatically« writes two hooks directly into ~/.claude/settings.json: a PreToolUse hook that sends »busy« whenever Claude calls a tool — and a Stop hook that sends »done« when Claude finishes. The exact commands are shown in the snippet below. Existing hooks from other apps are not affected.";
-"integration.hook_desc_codex" = "»Install Automatically« sets the onStart (sends »busy«) and onFinish (sends »done«) keys in ~/.codex/config.json. The exact commands are shown in the snippet below. Other settings in that file are not affected.";
+"integration.hook_desc_claude" = "»Install Automatically« writes three hooks into ~/.claude/settings.json: PreToolUse (sends »busy«), Notification (sends »waiting« when Claude needs your input), and Stop (sends »done«). The exact commands are shown in the snippet below. Existing hooks from other apps are not affected.";
+"integration.hook_desc_codex" = "»Install Automatically« sets the onStart (sends »busy«) and onFinish (sends »done«) keys in ~/.codex/config.json. Codex has no notification hook — the waiting state is not available for Codex. Other settings in that file are not affected.";
 "integration.hook_desc_custom" = "Copy the snippet below and add it manually to your agent's configuration file.";
 "integration.mode_file_watch" = "File Watching";
 "integration.mode_both" = "Both";
@@ -89,6 +91,7 @@
 "about.how_it_works" = "How it works";
 "about.how_desc" = "AgentFrame sits in your menu bar and watches for signals from your AI coding agent. Depending on the agent's current state, it draws a colored border around your screen — so you always know at a glance whether your agent is working, done, or idle.";
 "about.state_busy" = "Busy — A colored frame appears at the screen edges you configured.";
+"about.state_waiting" = "Waiting for input — The frame switches to the waiting color when the agent needs your input.";
 "about.state_done" = "Done — The frame switches to the done color and optionally triggers a full-screen flash.";
 "about.state_idle" = "Idle — The frame disappears.";
 "about.http_title" = "HTTP API";
@@ -96,7 +99,7 @@
 "about.file_title" = "File Watching";
 "about.file_desc" = "As an alternative to the HTTP server, your agent can simply write a word into a text file. AgentFrame monitors the configured file using an OS-level file watcher (kqueue) and reacts in real time — no network connection needed:";
 "about.hooks_title" = "Connecting your agent automatically";
-"about.hooks_desc" = "Open Settings → Integration and choose your agent and transport method. One click on »Install Automatically« writes the right hooks directly into your agent's configuration file — no manual editing required.\n\nClaude Code: AgentFrame adds a PreToolUse hook (sends »busy« on every tool call) and a Stop hook (sends »done« on completion) to ~/.claude/settings.json.\n\nCodex: The onStart and onFinish keys are set in ~/.codex/config.json. Existing settings are left untouched in both cases.";
+"about.hooks_desc" = "Open Settings → Integration and choose your agent and transport method. One click on »Install Automatically« writes the right hooks directly into your agent's configuration file — no manual editing required.\n\nClaude Code: Three hooks in ~/.claude/settings.json — PreToolUse (»busy«), Notification (»waiting« when Claude needs your input), and Stop (»done«).\n\nCodex: The onStart (»busy«) and onFinish (»done«) keys in ~/.codex/config.json. The waiting state is not available for Codex as it has no notification hook.\n\nCustom agents can call all four endpoints directly: /busy, /waiting, /done, /idle.";
 "about.customize_hint" = "Customizable — Colors, frame thickness, screen edges, and the flash effect can all be configured in Settings.";
 
 /* Menu Bar */
@@ -113,4 +116,5 @@
 "menu.update_available" = "Update available: v%@";
 "menu.status_idle" = "AgentFrame — Ready";
 "menu.status_busy" = "AgentFrame — Busy";
+"menu.status_waiting" = "AgentFrame — Waiting for Input";
 "menu.status_done" = "AgentFrame — Done";

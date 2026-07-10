@@ -137,9 +137,10 @@ final class MenuBarController {
 
     private func statusTitle(for status: AgentStatus) -> String {
         switch status {
-        case .idle: return settings.t("menu.status_idle")
-        case .busy: return settings.t("menu.status_busy")
-        case .done: return settings.t("menu.status_done")
+        case .idle:    return settings.t("menu.status_idle")
+        case .busy:    return settings.t("menu.status_busy")
+        case .waiting: return settings.t("menu.status_waiting")
+        case .done:    return settings.t("menu.status_done")
         }
     }
 
