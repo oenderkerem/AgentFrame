@@ -1,32 +1,89 @@
 # AgentFrame
 
-A lightweight macOS menu bar app that draws a colored border around your screen based on the status of AI coding agents (Claude Code, OpenAI Codex, or any custom agent).
-
-- **Busy** → colored frame appears at the screen edge(s) you configured
-- **Done** → color switches + optional full-screen flash
-- **Idle** → frame disappears
-
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-blue) ![Swift](https://img.shields.io/badge/Swift-5.9-orange) ![License](https://img.shields.io/badge/license-MIT-green) [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/oender)
 
----
+A lightweight macOS menu bar app that draws a colored border around your screen based on the status of AI coding agents (Claude Code, OpenAI Codex, or any custom agent).
+
+- **Busy** → colored frame appears at the screen edge(s) you configured 
+- **Waiting** → when your agent is waiting for input from you a colored frame appears at the screen edge(s) you configured
+
+- **Done** → color switches + optional full-screen flash
+- **Idle** → frame disappears
 
 ## Features
 
 - Colored frame on any combination of screen edges (top / right / bottom / left)
-- Individual color and opacity per status (busy / done)
+- Individual color and opacity per status (busy / waiting / done)
 - Adjustable frame thickness
 - Option to disable the frame for the busy state (done state is always shown)
 - Full-screen flash on task completion — auto-dismiss or persistent until click
 - Configurable auto-hide delay after done (returns frame to idle automatically)
 - Multi-monitor support: main screen, fixed screen, or follow the cursor
-- Sound notifications
+- Sound notifications per status (busy / waiting / done)
 - Launch at login
 - Status input via **HTTP** (default port 7842) and/or **file watching** — your choice
 - UI available in **English** and **German**
 
+### How the app looks like
+
+#### Lives in the menu bar
+![Screenshot](screenshots/agentframe.menubar.png)
+
+
+#### After clicking on the menu bar icon
+![Screenshot](screenshots/menubar.menu.png)
+
+
+#### Settings Screen
+![Screenshot](screenshots/agentframe.settings.png)
+
+
+#### Test buttons in the preview section
+
+You can click the test buttons to see, how the customized settings would look like 
+
+
+![Screenshot](screenshots/agentframe.test.png)
+
+#### Integration tab
+
+In the integration tab you can find information how to setup the hooks. You can either do it manually or click the install automatically button to install the hooks instantly. The hooks are needed to make the app react to the agent.
+
+
+![Screenshot](screenshots/agentframe.integration.png)
+
+#### Example for a frame in the busy state
+
+![Screenshot](screenshots/busy.png)
+
+#### Example for a frame, when claude is waiting for your input
+![Screenshot](screenshots/waiting-for-input.png)
+
+#### Example for a frame, when claude has finished its work and flash is deactivated
+![Screenshot](screenshots/no-flash.png)
+
+#### Example for a flash, when claude has finished its work and flash has been activated
+![Screenshot](screenshots/flash.png)
+
 ---
 
 ## Installation
+
+### ⚠️ First time running problem
+
+Unfortunately i have currently no apple developer account. Thats why i could not license the app. Thats why MacOs is showing an error, when you try to open the app the first time after the download. 
+
+#### The error 
+
+![Screenshot](screenshots/error.png)
+
+#### The solution
+
+Go to the System Settings and open the Privacy & Security tab and click the "Open Anyway" button. A second confirmation dialog will appear — click "Open Anyway" again. This is required for all applications that are not notarized by Apple.
+
+![Screenshot](screenshots/mac-settings.png)
+
+![Screenshot](screenshots/last-step.png)
 
 ### Download
 
@@ -57,7 +114,7 @@ Launch the app. It starts an HTTP server on `localhost:<PORT>` in the background
 
 ### 2. Install hooks automatically
 
-Open **Settings → Integration**, select **Claude Code** as your agent, then click **Install Automatically**. AgentFrame writes a `PreToolUse` hook (sends `/busy`) and a `Stop` hook (sends `/done`) into `~/.claude/settings.json` — existing hooks from other tools are not touched.
+Open **Settings → Integration**, select **Claude Code** as your agent, then click **Install Automatically**. AgentFrame writes three hooks into `~/.claude/settings.json`: a `PreToolUse` hook (sends `/busy`), a `Notification` hook (sends `/waiting` when Claude needs your input), and a `Stop` hook (sends `/done`) — existing hooks from other tools are not touched.
 
 Hooks are installed **once globally** and apply to all projects and sessions automatically. If you want to limit the integration to a single project, copy the snippet from Settings and paste it into `.claude/settings.json` inside that project directory instead.
 
@@ -71,6 +128,14 @@ Hooks are installed **once globally** and apply to all projects and sessions aut
         "matcher": ".*",
         "hooks": [
           { "type": "command", "command": "curl -s -X POST http://localhost:<PORT>/busy" }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          { "type": "command", "command": "curl -s -X POST http://localhost:<PORT>/waiting" }
         ]
       }
     ],
@@ -100,8 +165,10 @@ If you prefer not to use HTTP, switch to **File Watching** in Settings. Then use
 
 ```bash
 # in your hook command:
-echo busy > ~/.claude/agent_frame_status   # busy
-echo done > ~/.claude/agent_frame_status   # done
+echo busy    > ~/.claude/agent_frame_status   # busy
+echo waiting > ~/.claude/agent_frame_status   # waiting for input
+echo done    > ~/.claude/agent_frame_status   # done
+echo idle    > ~/.claude/agent_frame_status   # idle
 ```
 
 ---
@@ -160,7 +227,7 @@ curl -s -X POST http://localhost:<port>/done   # agent finished
 | General → Frame | Edges, thickness, color & opacity per status, busy on/off, auto-hide delay |
 | General → Frame → Screen | Which monitor to draw on, follow-cursor mode |
 | General → Frame → Flash | Enable flash, persistent until click, flash duration |
-| General → Preview | Test buttons to trigger busy / done / idle manually |
+| General → Preview | Test buttons to trigger busy / waiting / done / idle manually |
 | Integration | Agent provider, transport (HTTP / file), port, hook snippet, auto-install hooks |
 
 ---
