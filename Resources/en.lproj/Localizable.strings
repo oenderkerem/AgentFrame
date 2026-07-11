@@ -108,6 +108,7 @@
 "menu.server_port_in_use" = "⚠ Port %d in use – Open Settings";
 "menu.server_starting_warn" = "⚠ HTTP server starting…";
 "menu.test_busy" = "Test: Busy";
+"menu.test_waiting" = "Test: Waiting";
 "menu.test_done" = "Test: Done";
 "menu.test_idle" = "Test: Idle";
 "menu.about" = "About";

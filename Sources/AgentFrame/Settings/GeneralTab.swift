@@ -148,6 +148,7 @@ struct GeneralTab: View {
             Section(settings.t("general.preview")) {
                 HStack(spacing: 12) {
                     Button(settings.t("menu.test_busy")) { statusMonitor.setStatus(.busy) }
+                    Button(settings.t("menu.test_waiting")) { statusMonitor.setStatus(.waiting) }
                     Button(settings.t("menu.test_done")) { statusMonitor.setStatus(.done) }
                     Button(settings.t("menu.test_idle")) { statusMonitor.setStatus(.idle) }
                 }

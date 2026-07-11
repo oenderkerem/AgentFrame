@@ -108,6 +108,7 @@
 "menu.server_port_in_use" = "⚠ Port %d belegt – Einstellungen öffnen";
 "menu.server_starting_warn" = "⚠ HTTP-Server startet…";
 "menu.test_busy" = "Test: Beschäftigt";
+"menu.test_waiting" = "Test: Wartet auf Eingabe";
 "menu.test_done" = "Test: Fertig";
 "menu.test_idle" = "Test: Bereit";
 "menu.about" = "Über";

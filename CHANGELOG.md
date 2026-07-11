@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Waiting-for-input status** — new intermediate state (blue frame) between busy and done; activated via `/waiting` HTTP endpoint or file value `"waiting"`; color, opacity and sound configurable in Settings
+- Claude Code: Notification hook auto-installed alongside PreToolUse and Stop so the frame switches to waiting whenever Claude prompts for user input
+- Option to disable live mouse tracking in follow-cursor mode — eliminates background polling on multi-monitor setups; frame repositions on next status change instead of every 250 ms (Settings → General → Screen)
+
+### Fixed
+- Multi-monitor: screen picker in Settings now refreshes dynamically when monitors are connected or disconnected (no longer requires reopening Settings)
+- Multi-monitor: frame overlay now follows the mouse cursor in real time while busy or done (250 ms polling timer)
+- Gatekeeper no longer blocks the DMG build — app is now signed ad-hoc before packaging so macOS shows "unidentified developer" instead of "app is damaged"
+- Update-available banner no longer appears in dev builds (version string containing `"dev"` skips the update check)
+
+---
+
+### Added (initial release)
 - Menu bar app with static icon (adapts to light/dark mode)
 - Colored screen frame on any combination of edges (top / right / bottom / left)
 - Individual color and opacity per status (busy / done)
