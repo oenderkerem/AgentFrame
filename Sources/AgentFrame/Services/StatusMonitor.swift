@@ -111,11 +111,11 @@ final class HTTPStatusServer {
         let parts = first.split(separator: " ")
         guard parts.count >= 2, parts[0] == "POST" else { return nil }
         switch String(parts[1]).trimmingCharacters(in: .whitespaces) {
-        case "/busy":    return .busy
-        case "/waiting": return .waiting
-        case "/done":    return .done
-        case "/idle":    return .idle
-        case "/status":
+        case "/agent_frame/busy":    return .busy
+        case "/agent_frame/waiting": return .waiting
+        case "/agent_frame/done":    return .done
+        case "/agent_frame/idle":    return .idle
+        case "/agent_frame/status":
             let body = request.components(separatedBy: "\r\n\r\n").last ?? ""
             if body.contains("\"busy\"")    { return .busy }
             if body.contains("\"waiting\"") { return .waiting }
@@ -188,6 +188,7 @@ final class StatusMonitor: ObservableObject {
 
     var onStatusChange: ((AgentStatus) -> Void)?
     private(set) var currentStatus: AgentStatus = .idle
+    private var busyTimeoutWork: DispatchWorkItem?
 
     init(settings: AppSettings) {
         self.settings = settings
@@ -197,7 +198,7 @@ final class StatusMonitor: ObservableObject {
         let mode = settings.integrationMode
 
         if mode == .http || mode == .both {
-            httpServer.onStatus = { [weak self] s in self?.handle(s) }
+            httpServer.onStatus = { [weak self] s in DispatchQueue.main.async { self?.handle(s) } }
             httpServer.start(port: UInt16(settings.httpPort)) { [weak self] running, diagnostic in
                 self?.httpServerRunning = running
                 self?.httpServerError   = diagnostic
@@ -205,7 +206,7 @@ final class StatusMonitor: ObservableObject {
         }
 
         if mode == .file || mode == .both {
-            fileWatcher.onStatus = { [weak self] s in self?.handle(s) }
+            fileWatcher.onStatus = { [weak self] s in DispatchQueue.main.async { self?.handle(s) } }
             do {
                 try fileWatcher.start(filePath: settings.statusFilePath)
                 fileWatcherRunning = true
@@ -218,6 +219,8 @@ final class StatusMonitor: ObservableObject {
     }
 
     func stop() {
+        busyTimeoutWork?.cancel()
+        busyTimeoutWork = nil
         httpServer.stop()
         fileWatcher.stop()
         httpServerRunning  = false
@@ -238,7 +241,28 @@ final class StatusMonitor: ObservableObject {
     }
 
     private func handle(_ status: AgentStatus) {
-        currentStatus = status
-        onStatusChange?(status)
+        busyTimeoutWork?.cancel()
+        busyTimeoutWork = nil
+
+        // The Notification hook fires for ALL Claude Code notifications, including
+        // task-completion alerts — not only "waiting for input" events. Only honour
+        // the waiting signal when the agent is actively busy; ignore it otherwise.
+        if status == .waiting && currentStatus != .busy { return }
+
+        if status != currentStatus {
+            currentStatus = status
+            onStatusChange?(status)
+        }
+
+        guard status == .busy,
+              settings.stuckBusyResetEnabled,
+              settings.stuckBusyResetMinutes > 0 else { return }
+
+        let work = DispatchWorkItem { [weak self] in
+            self?.handle(.idle)
+        }
+        busyTimeoutWork = work
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + settings.stuckBusyResetMinutes * 60, execute: work)
     }
 }

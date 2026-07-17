@@ -9,7 +9,7 @@ final class AboutWindowController: NSWindowController {
         let w = NSWindow(contentViewController: host)
         w.title             = settings.t("about.title")
         w.styleMask         = [.titled, .closable]
-        w.setContentSize(NSSize(width: 480, height: 700))
+        w.setContentSize(NSSize(width: 480, height: 820))
         w.center()
         w.isReleasedWhenClosed = false
 
@@ -46,9 +46,9 @@ private struct AboutView: View {
 
     private var header: some View {
         HStack(spacing: 16) {
-            Image(systemName: "rectangle.dashed")
-                .font(.system(size: 40))
-                .foregroundColor(.secondary)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 64, height: 64)
             VStack(alignment: .leading, spacing: 4) {
                 Text("AgentFrame")
                     .font(.title2).bold()
@@ -60,10 +60,6 @@ private struct AboutView: View {
                         .font(.caption)
                         .foregroundColor(Color(nsColor: .tertiaryLabelColor))
                 }
-                Link(settings.t("about.support"),
-                     destination: URL(string: "https://ko-fi.com/oender")!)
-                    .font(.caption)
-                    .foregroundColor(Color(red: 1.0, green: 0.37, blue: 0.36))
             }
             Spacer()
         }
@@ -110,10 +106,11 @@ private struct AboutView: View {
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 4) {
-                codeRow("POST /busy")
-                codeRow("POST /done")
-                codeRow("POST /idle")
-                codeRow("POST /status   { \"status\": \"busy|done|idle\" }")
+                codeRow("POST /agent_frame/busy")
+                codeRow("POST /agent_frame/waiting")
+                codeRow("POST /agent_frame/done")
+                codeRow("POST /agent_frame/idle")
+                codeRow("POST /agent_frame/status   { \"status\": \"busy|...\" }")
             }
         }
     }
@@ -153,6 +150,37 @@ private struct AboutView: View {
             Text(settings.t("about.hooks_desc"))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 4) {
+                hookRow(name: "PreToolUse",   signal: "busy",    key: "about.hook_pretooluse")
+                hookRow(name: "PostToolUse",  signal: "busy",    key: "about.hook_posttooluse")
+                hookRow(name: "Notification", signal: "waiting", key: "about.hook_notification")
+                hookRow(name: "Stop",         signal: "done",    key: "about.hook_stop")
+                hookRow(name: "SubagentStop", signal: "done",    key: "about.hook_subagent_stop")
+            }
+            Text(settings.t("about.hook_notification_note"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func hookRow(name: String, signal: String, key: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(name)
+                .font(.system(.caption, design: .monospaced))
+                .padding(.horizontal, 6).padding(.vertical, 2)
+                .background(Color(nsColor: .controlBackgroundColor))
+                .cornerRadius(4)
+                .frame(width: 118, alignment: .leading)
+            Text("→ \(signal)")
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .frame(width: 80, alignment: .leading)
+            Text(settings.t(key))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
         }
     }
 

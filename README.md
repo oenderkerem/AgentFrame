@@ -1,5 +1,7 @@
 # AgentFrame
 
+![AgentFrame](Resources/banner.svg)
+
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-blue) ![Swift](https://img.shields.io/badge/Swift-5.9-orange) ![License](https://img.shields.io/badge/license-MIT-green) [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/oender)
 
 A lightweight macOS menu bar app that draws a colored border around your screen based on the status of AI coding agents (Claude Code, OpenAI Codex, or any custom agent).
@@ -21,7 +23,8 @@ A lightweight macOS menu bar app that draws a colored border around your screen 
 - Multi-monitor support: main screen, fixed screen, or follow the cursor
 - Sound notifications per status (busy / waiting / done)
 - Launch at login
-- Status input via **HTTP** (default port 7842) and/or **file watching** — your choice
+- Status input via **HTTP** (default port 7842) or **file watching** — your choice
+- Installed hooks visible in Settings with one-click removal
 - UI available in **English** and **German**
 
 ### How the app looks like
@@ -30,18 +33,25 @@ A lightweight macOS menu bar app that draws a colored border around your screen 
 ![Screenshot](screenshots/agentframe.menubar.png)
 
 
-#### After clicking on the menu bar icon
-![Screenshot](screenshots/menubar.menu.png)
+#### Busy state example
 
+![Screenshot](screenshots/busy.png)
+
+#### Waiting state example
+![Screenshot](screenshots/waiting-for-input.png)
+
+#### Finished state example (without flash)
+![Screenshot](screenshots/no-flash.png)
+
+#### Finished state with flash example
+![Screenshot](screenshots/flash.png)
 
 #### Settings Screen
 ![Screenshot](screenshots/agentframe.settings.png)
 
-
 #### Test buttons in the preview section
 
 You can click the test buttons to see, how the customized settings would look like 
-
 
 ![Screenshot](screenshots/agentframe.test.png)
 
@@ -49,27 +59,13 @@ You can click the test buttons to see, how the customized settings would look li
 
 In the integration tab you can find information how to setup the hooks. You can either do it manually or click the install automatically button to install the hooks instantly. The hooks are needed to make the app react to the agent.
 
-
 ![Screenshot](screenshots/agentframe.integration.png)
-
-#### Example for a frame in the busy state
-
-![Screenshot](screenshots/busy.png)
-
-#### Example for a frame, when claude is waiting for your input
-![Screenshot](screenshots/waiting-for-input.png)
-
-#### Example for a frame, when claude has finished its work and flash is deactivated
-![Screenshot](screenshots/no-flash.png)
-
-#### Example for a flash, when claude has finished its work and flash has been activated
-![Screenshot](screenshots/flash.png)
 
 ---
 
 ## Installation
 
-### ⚠️ First time running problem
+### ⚠️ How to fix the problem, that occurs when starting the app the first time 
 
 Unfortunately i have currently no apple developer account. Thats why i could not license the app. Thats why MacOs is showing an error, when you try to open the app the first time after the download. 
 
@@ -114,7 +110,7 @@ Launch the app. It starts an HTTP server on `localhost:<PORT>` in the background
 
 ### 2. Install hooks automatically
 
-Open **Settings → Integration**, select **Claude Code** as your agent, then click **Install Automatically**. AgentFrame writes three hooks into `~/.claude/settings.json`: a `PreToolUse` hook (sends `/busy`), a `Notification` hook (sends `/waiting` when Claude needs your input), and a `Stop` hook (sends `/done`) — existing hooks from other tools are not touched.
+Open **Settings → Integration**, select **Claude Code** as your agent, then click **Install Automatically**. AgentFrame writes four hooks into `~/.claude/settings.json` — existing hooks from other tools are not touched.
 
 Hooks are installed **once globally** and apply to all projects and sessions automatically. If you want to limit the integration to a single project, copy the snippet from Settings and paste it into `.claude/settings.json` inside that project directory instead.
 
@@ -123,39 +119,22 @@ Hooks are installed **once globally** and apply to all projects and sessions aut
 ```json
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          { "type": "command", "command": "curl -s -X POST http://localhost:<PORT>/busy" }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          { "type": "command", "command": "curl -s -X POST http://localhost:<PORT>/waiting" }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          { "type": "command", "command": "curl -s -X POST http://localhost:<PORT>/done" }
-        ]
-      }
-    ]
+    "PreToolUse":   [{ "matcher": ".*", "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST http://localhost:<PORT>/agent_frame/busy || true" }] }],
+    "PostToolUse":  [{ "matcher": ".*", "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST http://localhost:<PORT>/agent_frame/busy || true" }] }],
+    "Notification": [{ "matcher": ".*", "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST http://localhost:<PORT>/agent_frame/waiting || true" }] }],
+    "Stop":         [{ "matcher": ".*", "hooks": [{ "type": "command", "command": "curl -s --max-time 1 -X POST http://localhost:<PORT>/agent_frame/done || true" }] }]
   }
 }
 ```
 
-| Hook | When it fires | Signal sent |
+| Hook | When it fires | Signal |
 |---|---|---|
-| `PreToolUse` | Before Claude uses any tool | `/busy` → frame appears |
-| `Notification` | When Claude is waiting for your input | `/waiting` → frame switches to waiting color |
-| `Stop` | When Claude finishes its turn | `/done` → color switches + flash |
+| `PreToolUse` | Before each tool call | `busy` → frame appears |
+| `PostToolUse` | After each tool call | `busy` → keeps frame active between tools |
+| `Notification` | When Claude Code sends an internal notification | `waiting` → frame switches to waiting color |
+| `Stop` | When the session completes | `done` → color switches + flash |
+
+> **Note on the Notification hook:** It fires when Claude Code triggers a desktop notification, not every time Claude outputs a question in text. In some cases the frame may stay on busy instead of switching to waiting — this is a limitation of Claude Code's hook system.
 
 AgentFrame also shows a ready-to-copy snippet in **Settings → Integration**.
 
@@ -181,8 +160,8 @@ Or add manually to `~/.codex/config.json`:
 
 ```json
 {
-  "onStart":  "curl -s -X POST http://localhost:<PORT>/busy",
-  "onFinish": "curl -s -X POST http://localhost:<PORT>/done"
+  "onStart":  "curl -s --max-time 1 -X POST http://localhost:<PORT>/agent_frame/busy",
+  "onFinish": "curl -s --max-time 1 -X POST http://localhost:<PORT>/agent_frame/done"
 }
 ```
 
@@ -195,11 +174,11 @@ Or add manually to `~/.codex/config.json`:
 Any agent can send signals via HTTP — no dependency on Claude Code.
 
 ```
-POST http://localhost:<port>/busy              →  frame appears (busy color)
-POST http://localhost:<port>/waiting           →  frame switches to waiting color
-POST http://localhost:<port>/done              →  frame appears (done color) + flash
-POST http://localhost:<port>/idle              →  frame disappears
-POST http://localhost:<port>/status            →  body: {"status":"busy|waiting|done|idle"}
+POST http://localhost:<port>/agent_frame/busy     →  frame appears (busy color)
+POST http://localhost:<port>/agent_frame/waiting  →  frame switches to waiting color
+POST http://localhost:<port>/agent_frame/done     →  frame appears (done color) + flash
+POST http://localhost:<port>/agent_frame/idle     →  frame disappears
+POST http://localhost:<port>/agent_frame/status   →  body: {"status":"busy|waiting|done|idle"}
 ```
 
 The port defaults to `7842` and can be changed in **Settings → Integration**.
@@ -213,8 +192,8 @@ AgentFrame is fully agent-agnostic. The HTTP server and file watcher don't know 
 To use it with an agent not listed in Settings, just call the endpoints directly from that agent's hook/callback system:
 
 ```bash
-curl -s -X POST http://localhost:<port>/busy   # agent started working
-curl -s -X POST http://localhost:<port>/done   # agent finished
+curl -s --max-time 1 -X POST http://localhost:<port>/agent_frame/busy   # agent started working
+curl -s --max-time 1 -X POST http://localhost:<port>/agent_frame/done   # agent finished
 ```
 
 ---
@@ -224,11 +203,11 @@ curl -s -X POST http://localhost:<port>/done   # agent finished
 | Tab | What you configure |
 |---|---|
 | General | Language, sound notifications, launch at login |
-| General → Frame | Edges, thickness, color & opacity per status, busy on/off, auto-hide delay |
-| General → Frame → Screen | Which monitor to draw on, follow-cursor mode |
+| General → Frame | Edges, thickness, color & opacity per status, busy on/off, auto-hide delay, stuck-busy auto-reset |
+| General → Frame → Screen | Which monitor to draw on, follow-cursor mode, live tracking toggle |
 | General → Frame → Flash | Enable flash, persistent until click, flash duration |
 | General → Preview | Test buttons to trigger busy / waiting / done / idle manually |
-| Integration | Agent provider, transport (HTTP / file), port, hook snippet, auto-install hooks |
+| Integration | Agent provider, transport (HTTP / file), port, hook snippet, auto-install / remove hooks, installed hooks inspector |
 
 ---
 
@@ -241,13 +220,13 @@ Pull requests are welcome. For larger changes, open an issue first to discuss wh
 Releases are automated via GitHub Actions. To publish a new version:
 
 ```bash
-git tag v1.2.0
-git push origin v1.2.0
+git tag v<major>.<minor>.<patch>
+git push origin v<major>.<minor>.<patch>
 ```
 
 The workflow will build the app, package it as a DMG, and publish a GitHub Release with the DMG attached. The version number is read from the tag — no manual edits to `Info.plist` or the Makefile required.
 
-The tag must follow the `v<major>.<minor>.<patch>` format.
+The tag must follow the `v<major>.<minor>.<patch>` format and should be pushed from the **main** branch.
 
 ---
 

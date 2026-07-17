@@ -86,14 +86,22 @@ final class MenuBarController {
         let settingsItem = NSMenuItem(title: settings.t("menu.settings"),
                                       action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
+        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
         menu.addItem(settingsItem)
 
         let aboutItem = NSMenuItem(title: settings.t("menu.about"),
                                    action: #selector(openAbout), keyEquivalent: "")
         aboutItem.target = self
+        aboutItem.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
         menu.addItem(aboutItem)
 
         menu.addItem(.separator())
+
+        let kofiItem = NSMenuItem(title: settings.t("menu.support_kofi"),
+                                  action: #selector(openKofi), keyEquivalent: "")
+        kofiItem.target = self
+        kofiItem.image = NSImage(systemSymbolName: "heart", accessibilityDescription: nil)
+        menu.addItem(kofiItem)
 
         menu.addItem(NSMenuItem(title: settings.t("menu.quit"),
                                 action: #selector(NSApplication.terminate(_:)),
@@ -148,6 +156,10 @@ final class MenuBarController {
 
     @objc private func openUpdate() {
         updateChecker.openReleasesPage()
+    }
+
+    @objc private func openKofi() {
+        NSWorkspace.shared.open(URL(string: "https://ko-fi.com/oender")!)
     }
 
     @objc private func openAbout() {
