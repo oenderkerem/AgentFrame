@@ -40,6 +40,9 @@
 "display.auto_hide" = "Auto-hide frame after done";
 "display.auto_hide_delay" = "Hide after";
 "display.auto_hide_help" = "The frame border automatically returns to idle after the configured delay. When disabled, the done-color border stays until the next status signal arrives.";
+"display.stuck_busy_reset" = "Auto-reset stuck busy state";
+"display.stuck_busy_reset_help" = "If the frame stays busy with no new signal — e.g. when the agent exits without sending a done signal — it resets to idle automatically.";
+"display.stuck_busy_reset_delay" = "Reset after";
 
 /* Settings Tabs */
 "settings.tab_general" = "General";
@@ -59,6 +62,8 @@
 "integration.installed" = "Installed: %@";
 "integration.install_not_supported" = "Manual installation required.";
 "integration.apply_restart" = "Apply & Restart";
+"integration.restarting" = "Restarting…";
+"integration.restarted" = "✓ Restarted";
 "integration.server_running" = "HTTP server running on port %d";
 "integration.server_error" = "HTTP server error: %@";
 "integration.server_starting" = "HTTP server starting…";
@@ -67,7 +72,7 @@
 "integration.error_details" = "Show details";
 "integration.error_hide" = "Hide details";
 "integration.copy_error" = "Copy error";
-"integration.hook_desc_claude" = "»Install Automatically« writes three hooks into ~/.claude/settings.json: PreToolUse (sends »busy«), Notification (sends »waiting« when Claude needs your input), and Stop (sends »done«). The exact commands are shown in the snippet below. Existing hooks from other apps are not affected.";
+"integration.hook_desc_claude" = "»Install Automatically« writes four hooks into ~/.claude/settings.json: PreToolUse and PostToolUse (send »busy«), Notification (sends »waiting« when Claude needs your input), and Stop (sends »done«). The exact commands are shown in the snippet below. Existing hooks from other apps are not affected.";
 "integration.hook_desc_codex" = "»Install Automatically« sets the onStart (sends »busy«) and onFinish (sends »done«) keys in ~/.codex/config.json. Codex has no notification hook — the waiting state is not available for Codex. Other settings in that file are not affected.";
 "integration.hook_desc_custom" = "Copy the snippet below and add it manually to your agent's configuration file.";
 "integration.mode_file_watch" = "File Watching";
@@ -79,6 +84,14 @@
 "integration.transport_file_title" = "File Watching";
 "integration.transport_file_desc" = "Your agent writes »busy«, »done«, or »idle« into a text file. AgentFrame monitors this file at the OS level and reacts in real time to any change — no network required.";
 "integration.overview_global_hint" = "Set up once — hooks apply globally across all projects and sessions. For Claude Code, the snippet can alternatively be added manually to .claude/settings.json in the project directory to limit the integration to a single project.";
+"integration.remove_hooks_title" = "Remove Existing Hooks?";
+"integration.remove_hooks_msg" = "You switched to File Watching mode. The previously installed hooks use the HTTP server, which is no longer active. AgentFrame can remove those hooks automatically from all supported agent configurations (Claude Code, Codex).";
+"integration.remove_hooks_confirm" = "Remove Hooks";
+"integration.remove_hooks_skip" = "Keep Hooks";
+"integration.hooks_removed" = "Hooks removed successfully";
+"integration.installed_hooks_title" = "Installed Hooks";
+"integration.no_hooks_installed" = "No AgentFrame hooks found";
+"integration.remove_hooks_manual" = "Remove All Hooks";
 
 /* Agent Provider */
 "agent.custom" = "Custom";
@@ -101,7 +114,13 @@
 "about.file_title" = "File Watching";
 "about.file_desc" = "As an alternative to the HTTP server, your agent can simply write a word into a text file. AgentFrame monitors the configured file using an OS-level file watcher (kqueue) and reacts in real time — no network connection needed:";
 "about.hooks_title" = "Connecting your agent automatically";
-"about.hooks_desc" = "Open Settings → Integration and choose your agent and transport method. One click on »Install Automatically« writes the right hooks directly into your agent's configuration file — no manual editing required.\n\nClaude Code: Three hooks in ~/.claude/settings.json — PreToolUse (»busy«), Notification (»waiting« when Claude needs your input), and Stop (»done«).\n\nCodex: The onStart (»busy«) and onFinish (»done«) keys in ~/.codex/config.json. The waiting state is not available for Codex as it has no notification hook.\n\nCustom agents can call all four endpoints directly: /busy, /waiting, /done, /idle.";
+"about.hooks_desc" = "Open Settings → Integration and click »Install Automatically«. AgentFrame writes hooks directly into your agent's configuration file — no manual editing required. For Claude Code, five hooks are installed:";
+"about.hook_pretooluse" = "Before each tool call";
+"about.hook_posttooluse" = "After each tool call — keeps frame busy between tools";
+"about.hook_notification" = "When Claude needs your attention";
+"about.hook_stop" = "When the main session completes";
+"about.hook_subagent_stop" = "When a subagent completes (parallel tasks)";
+"about.hook_notification_note" = "Note: The Notification hook only fires when Claude Code sends an internal notification — not every time Claude asks a question in text. In some cases the frame may stay busy instead of switching to waiting.";
 "about.customize_hint" = "Customizable — Colors, frame thickness, screen edges, and the flash effect can all be configured in Settings.";
 
 /* Menu Bar */
@@ -113,6 +132,7 @@
 "menu.test_idle" = "Test: Idle";
 "menu.about" = "About";
 "menu.settings" = "Settings…";
+"menu.support_kofi" = "Support on Ko-fi";
 "menu.quit" = "Quit";
 "menu.server_port_unavailable" = "Port %d unavailable";
 "menu.server_starting" = "Server starting…";

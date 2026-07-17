@@ -44,9 +44,9 @@ enum AgentProvider: Int, CaseIterable {
     }
 
     func hooksSnippet(port: Int, filePath: String, mode: IntegrationMode) -> String {
-        let httpBusy    = "curl -s -X POST http://localhost:\(port)/busy"
-        let httpWaiting = "curl -s -X POST http://localhost:\(port)/waiting"
-        let httpDone    = "curl -s -X POST http://localhost:\(port)/done"
+        let httpBusy    = "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/busy || true"
+        let httpWaiting = "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/waiting || true"
+        let httpDone    = "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/done || true"
         let fileBusy    = "echo busy > \(filePath)"
         let fileWaiting = "echo waiting > \(filePath)"
         let fileDone    = "echo done > \(filePath)"
@@ -60,18 +60,10 @@ enum AgentProvider: Int, CaseIterable {
             // ~/.claude/settings.json  — add under "hooks"
             {
               "hooks": {
-                "PreToolUse": [{
-                  "matcher": ".*",
-                  "hooks": [{"type": "command", "command": "\(busyCmd)"}]
-                }],
-                "Notification": [{
-                  "matcher": ".*",
-                  "hooks": [{"type": "command", "command": "\(waitingCmd)"}]
-                }],
-                "Stop": [{
-                  "matcher": ".*",
-                  "hooks": [{"type": "command", "command": "\(doneCmd)"}]
-                }]
+                "PreToolUse":   [{"matcher": ".*", "hooks": [{"type": "command", "command": "\(busyCmd)"}]}],
+                "PostToolUse":  [{"matcher": ".*", "hooks": [{"type": "command", "command": "\(busyCmd)"}]}],
+                "Notification": [{"matcher": ".*", "hooks": [{"type": "command", "command": "\(waitingCmd)"}]}],
+                "Stop":         [{"matcher": ".*", "hooks": [{"type": "command", "command": "\(doneCmd)"}]}]
               }
             }
             """
@@ -91,7 +83,7 @@ enum AgentProvider: Int, CaseIterable {
             // Busy    : \(httpBusy)
             // Waiting : \(httpWaiting)
             // Done    : \(httpDone)
-            // Idle    : curl -s -X POST http://localhost:\(port)/idle
+            // Idle    : curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/idle || true
             //
             // File alternative:
             // Busy    : \(fileBusy)
@@ -132,6 +124,14 @@ extension NSColor {
 enum HookInstallResult {
     case success(path: String)
     case failure(String)
+}
+
+// MARK: - Installed hooks summary
+
+struct InstalledHooks {
+    var claudeCode: [String] = []
+    var codex:      [String] = []
+    var isEmpty: Bool { claudeCode.isEmpty && codex.isEmpty }
 }
 
 // MARK: - AppSettings
@@ -181,6 +181,8 @@ final class AppSettings: ObservableObject {
     @Published var httpPort: Int             { didSet { ud.set(httpPort,              forKey: "httpPort") } }
     @Published var statusFilePath: String    { didSet { ud.set(statusFilePath,        forKey: "statusFilePath") } }
     @Published var agentProviderRaw: Int     { didSet { ud.set(agentProviderRaw,      forKey: "agentProviderRaw") } }
+    @Published var stuckBusyResetEnabled: Bool   { didSet { ud.set(stuckBusyResetEnabled,  forKey: "stuckBusyResetEnabled") } }
+    @Published var stuckBusyResetMinutes: Double { didSet { ud.set(stuckBusyResetMinutes,  forKey: "stuckBusyResetMinutes") } }
 
     // MARK: - Localization
 
@@ -222,21 +224,21 @@ final class AppSettings: ObservableObject {
         let expanded = (statusFilePath as NSString).expandingTildeInPath
         return integrationMode == .file
             ? "echo busy > \(expanded)"
-            : "curl -s -X POST http://localhost:\(httpPort)/busy"
+            : "curl -s --max-time 1 -X POST http://localhost:\(httpPort)/agent_frame/busy || true"
     }
 
     private func waitingCommand() -> String {
         let expanded = (statusFilePath as NSString).expandingTildeInPath
         return integrationMode == .file
             ? "echo waiting > \(expanded)"
-            : "curl -s -X POST http://localhost:\(httpPort)/waiting"
+            : "curl -s --max-time 1 -X POST http://localhost:\(httpPort)/agent_frame/waiting || true"
     }
 
     private func doneCommand() -> String {
         let expanded = (statusFilePath as NSString).expandingTildeInPath
         return integrationMode == .file
             ? "echo done > \(expanded)"
-            : "curl -s -X POST http://localhost:\(httpPort)/done"
+            : "curl -s --max-time 1 -X POST http://localhost:\(httpPort)/agent_frame/done || true"
     }
 
     private func installClaudeCodeHooks() -> HookInstallResult {
@@ -267,6 +269,8 @@ final class AppSettings: ObservableObject {
 
             hooksDict["PreToolUse"] = withAgentFrameEntry(
                 in: (hooksDict["PreToolUse"] as? [[String: Any]]) ?? [], cmd: busyCommand())
+            hooksDict["PostToolUse"] = withAgentFrameEntry(
+                in: (hooksDict["PostToolUse"] as? [[String: Any]]) ?? [], cmd: busyCommand())
             hooksDict["Notification"] = withAgentFrameEntry(
                 in: (hooksDict["Notification"] as? [[String: Any]]) ?? [], cmd: waitingCommand())
             hooksDict["Stop"] = withAgentFrameEntry(
@@ -314,6 +318,130 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    // MARK: - Hook removal
+
+    func removeAllAgentHooks() -> [String: HookInstallResult] {
+        ["claudeCode": removeClaudeCodeHooks(), "codex": removeCodexHooks()]
+    }
+
+    func readInstalledHooks() -> InstalledHooks {
+        var result = InstalledHooks()
+        let patterns = agentFrameHookPatterns()
+
+        let settingsPath = (NSHomeDirectory() as NSString).appendingPathComponent(".claude/settings.json")
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: settingsPath)),
+           let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let hooksDict = root["hooks"] as? [String: Any] {
+            for key in ["PreToolUse", "PostToolUse", "Notification", "Stop", "SubagentStop"] {
+                if let arr = hooksDict[key] as? [[String: Any]] {
+                    let hasMatch = arr.contains { entry in
+                        guard let inner = entry["hooks"] as? [[String: Any]] else { return false }
+                        return inner.contains { hook in
+                            guard let cmd = hook["command"] as? String else { return false }
+                            return patterns.contains { cmd.contains($0) }
+                        }
+                    }
+                    if hasMatch { result.claudeCode.append(key) }
+                }
+            }
+        }
+
+        let configPath = (NSHomeDirectory() as NSString).appendingPathComponent(".codex/config.json")
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
+           let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            func matches(_ v: Any?) -> Bool {
+                guard let cmd = v as? String else { return false }
+                return patterns.contains { cmd.contains($0) }
+            }
+            if matches(root["onStart"])  { result.codex.append("onStart") }
+            if matches(root["onFinish"]) { result.codex.append("onFinish") }
+        }
+
+        return result
+    }
+
+    private func agentFrameHookPatterns() -> [String] {
+        let expanded = (statusFilePath as NSString).expandingTildeInPath
+        return ["/agent_frame/", expanded]
+    }
+
+    private func removeClaudeCodeHooks() -> HookInstallResult {
+        let settingsPath = (NSHomeDirectory() as NSString)
+            .appendingPathComponent(".claude/settings.json")
+        let settingsURL = URL(fileURLWithPath: settingsPath)
+
+        guard FileManager.default.fileExists(atPath: settingsPath) else {
+            return .success(path: settingsPath)
+        }
+
+        do {
+            let data = try Data(contentsOf: settingsURL)
+            var root = (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+            guard var hooksDict = root["hooks"] as? [String: Any] else {
+                return .success(path: settingsPath)
+            }
+
+            let patterns = agentFrameHookPatterns()
+            func isAgentFrameEntry(_ entry: [String: Any]) -> Bool {
+                guard let inner = entry["hooks"] as? [[String: Any]] else { return false }
+                return inner.contains { hook in
+                    guard let cmd = hook["command"] as? String else { return false }
+                    return patterns.contains { cmd.contains($0) }
+                }
+            }
+
+            for key in ["PreToolUse", "PostToolUse", "Notification", "Stop", "SubagentStop"] { // SubagentStop kept for removal only
+                if let arr = hooksDict[key] as? [[String: Any]] {
+                    let filtered = arr.filter { !isAgentFrameEntry($0) }
+                    if filtered.isEmpty {
+                        hooksDict.removeValue(forKey: key)
+                    } else {
+                        hooksDict[key] = filtered
+                    }
+                }
+            }
+            root["hooks"] = hooksDict
+
+            let outData = try JSONSerialization.data(
+                withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
+            try outData.write(to: settingsURL)
+            return .success(path: settingsPath)
+        } catch {
+            return .failure(error.localizedDescription)
+        }
+    }
+
+    private func removeCodexHooks() -> HookInstallResult {
+        let configPath = (NSHomeDirectory() as NSString)
+            .appendingPathComponent(".codex/config.json")
+        let configURL = URL(fileURLWithPath: configPath)
+
+        guard FileManager.default.fileExists(atPath: configPath) else {
+            return .success(path: configPath)
+        }
+
+        do {
+            let data = try Data(contentsOf: configURL)
+            var root = (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+
+            let patterns = agentFrameHookPatterns()
+            func matchesAgentFrame(_ value: Any?) -> Bool {
+                guard let cmd = value as? String else { return false }
+                return patterns.contains { cmd.contains($0) }
+            }
+
+            if matchesAgentFrame(root["onStart"])  { root.removeValue(forKey: "onStart") }
+            if matchesAgentFrame(root["onFinish"]) { root.removeValue(forKey: "onFinish") }
+
+            let outData = try JSONSerialization.data(
+                withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
+            try outData.write(to: configURL)
+            return .success(path: configPath)
+        } catch {
+            return .failure(error.localizedDescription)
+        }
+    }
+
     private let ud = UserDefaults.standard
 
     private init() {
@@ -342,9 +470,11 @@ final class AppSettings: ObservableObject {
         flashPersistent     = d.object(forKey: "flashPersistent")     as? Bool   ?? false
         autoResetAfterDone  = d.object(forKey: "autoResetAfterDone")  as? Bool   ?? true
         autoResetDelay      = d.object(forKey: "autoResetDelay")      as? Double ?? 2.0
-        integrationModeRaw  = d.object(forKey: "integrationModeRaw")  as? Int    ?? IntegrationMode.both.rawValue
-        httpPort            = d.object(forKey: "httpPort")            as? Int    ?? 7842
-        statusFilePath      = d.string(forKey: "statusFilePath")                 ?? "~/.claude/agent_frame_status"
-        agentProviderRaw    = d.object(forKey: "agentProviderRaw")    as? Int    ?? AgentProvider.claudeCode.rawValue
+        integrationModeRaw   = d.object(forKey: "integrationModeRaw")   as? Int    ?? IntegrationMode.both.rawValue
+        httpPort             = d.object(forKey: "httpPort")             as? Int    ?? 7842
+        statusFilePath       = d.string(forKey: "statusFilePath")                  ?? "~/.claude/agent_frame_status"
+        agentProviderRaw     = d.object(forKey: "agentProviderRaw")     as? Int    ?? AgentProvider.claudeCode.rawValue
+        stuckBusyResetEnabled = d.object(forKey: "stuckBusyResetEnabled") as? Bool  ?? true
+        stuckBusyResetMinutes = d.object(forKey: "stuckBusyResetMinutes") as? Double ?? 5.0
     }
 }

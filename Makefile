@@ -27,10 +27,11 @@ build:
 	@if [ -f Resources/AppIcon.icns ]; then cp Resources/AppIcon.icns $(RESOURCES)/; fi
 	@echo "✓ $(APP) fertig ($(VERSION))"
 
-run: build
-	open $(APP)
+run: install
+	open /Applications/$(APP)
 
 install: build
+	rm -rf /Applications/$(APP)
 	cp -r $(APP) /Applications/
 	@echo "✓ In /Applications/ installiert"
 

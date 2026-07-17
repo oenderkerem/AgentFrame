@@ -40,6 +40,9 @@
 "display.auto_hide" = "Rahmen nach Fertig automatisch ausblenden";
 "display.auto_hide_delay" = "Ausblenden nach";
 "display.auto_hide_help" = "Der Rahmen kehrt nach der eingestellten Verzögerung automatisch zu Bereit zurück. Ist die Option deaktiviert, bleibt der Fertig-Rahmen bis zum nächsten Status-Signal bestehen.";
+"display.stuck_busy_reset" = "Feststeckenden Beschäftigt-Status zurücksetzen";
+"display.stuck_busy_reset_help" = "Falls der Rahmen zu lange im Beschäftigt-Status bleibt ohne ein neues Signal zu erhalten — z. B. wenn der Agent beendet wird ohne ein Fertig-Signal zu senden — wird er automatisch auf Bereit zurückgesetzt.";
+"display.stuck_busy_reset_delay" = "Zurücksetzen nach";
 
 /* Settings Tabs */
 "settings.tab_general" = "Allgemein";
@@ -59,6 +62,8 @@
 "integration.installed" = "Installiert: %@";
 "integration.install_not_supported" = "Manuelle Installation erforderlich.";
 "integration.apply_restart" = "Übernehmen & Neu starten";
+"integration.restarting" = "Startet neu…";
+"integration.restarted" = "✓ Neustart abgeschlossen";
 "integration.server_running" = "HTTP-Server läuft auf Port %d";
 "integration.server_error" = "HTTP-Server-Fehler: %@";
 "integration.server_starting" = "HTTP-Server startet…";
@@ -67,7 +72,7 @@
 "integration.error_details" = "Details anzeigen";
 "integration.error_hide" = "Details ausblenden";
 "integration.copy_error" = "Fehler kopieren";
-"integration.hook_desc_claude" = "»Automatisch installieren« schreibt drei Hooks in ~/.claude/settings.json: PreToolUse (sendet »busy«), Notification (sendet »waiting« wenn Claude auf deine Eingabe wartet) und Stop (sendet »done«). Die genauen Befehle siehst du im Snippet unten. Bestehende Hooks anderer Apps bleiben unverändert.";
+"integration.hook_desc_claude" = "»Automatisch installieren« schreibt vier Hooks in ~/.claude/settings.json: PreToolUse und PostToolUse (senden »busy«), Notification (sendet »waiting« wenn Claude auf deine Eingabe wartet) sowie Stop (sendet »done«). Die genauen Befehle siehst du im Snippet unten. Bestehende Hooks anderer Apps bleiben unverändert.";
 "integration.hook_desc_codex" = "»Automatisch installieren« setzt die Keys onStart (sendet »busy«) und onFinish (sendet »done«) in ~/.codex/config.json. Codex bietet keinen Notification-Hook — der Wartezustand steht dort nicht zur Verfügung. Andere Einstellungen in der Datei bleiben unverändert.";
 "integration.hook_desc_custom" = "Kopiere den Code unten und füge ihn manuell in die Konfigurationsdatei deines Agenten ein.";
 "integration.mode_file_watch" = "Datei-Überwachung";
@@ -79,6 +84,14 @@
 "integration.transport_file_title" = "Datei-Überwachung";
 "integration.transport_file_desc" = "Dein Agent schreibt »busy«, »done« oder »idle« in eine Textdatei. AgentFrame beobachtet diese Datei auf OS-Ebene und reagiert in Echtzeit auf jede Änderung — kein Netzwerk erforderlich.";
 "integration.overview_global_hint" = "Einmalig einrichten — die Hooks gelten global für alle Projekte und Sessions. Für Claude Code kann der Snippet alternativ manuell in .claude/settings.json im jeweiligen Projektverzeichnis eingefügt werden, um die Integration auf ein einzelnes Projekt zu begrenzen.";
+"integration.remove_hooks_title" = "Bestehende Hooks entfernen?";
+"integration.remove_hooks_msg" = "Du hast zur Datei-Überwachung gewechselt. Die zuvor installierten Hooks verwenden den HTTP-Server, der nicht mehr aktiv ist. AgentFrame kann diese Hooks automatisch aus allen unterstützten Agenten-Konfigurationen entfernen (Claude Code, Codex).";
+"integration.remove_hooks_confirm" = "Hooks entfernen";
+"integration.remove_hooks_skip" = "Hooks behalten";
+"integration.hooks_removed" = "Hooks erfolgreich entfernt";
+"integration.installed_hooks_title" = "Installierte Hooks";
+"integration.no_hooks_installed" = "Keine AgentFrame-Hooks gefunden";
+"integration.remove_hooks_manual" = "Alle Hooks entfernen";
 
 /* Agent Provider */
 "agent.custom" = "Benutzerdefiniert";
@@ -101,7 +114,13 @@
 "about.file_title" = "Datei-Überwachung";
 "about.file_desc" = "Alternativ zum HTTP-Server kann dein Agent einfach einen Text in eine Datei schreiben. AgentFrame beobachtet die konfigurierte Datei mit einem OS-Level-File-Watcher (kqueue) und reagiert in Echtzeit — ganz ohne Netzwerk:";
 "about.hooks_title" = "Agenten automatisch verbinden";
-"about.hooks_desc" = "Öffne Einstellungen → Integration und wähle deinen Agenten sowie die Transport-Methode. Ein Klick auf »Automatisch installieren« schreibt die passenden Hooks direkt in die Konfigurationsdatei deines Agenten — kein manuelles Editieren nötig.\n\nClaude Code: Drei Hooks in ~/.claude/settings.json — PreToolUse (»busy«), Notification (»waiting« wenn Claude auf Eingabe wartet) und Stop (»done«).\n\nCodex: Die Keys onStart (»busy«) und onFinish (»done«) in ~/.codex/config.json. Der Wartezustand ist für Codex nicht verfügbar, da kein Notification-Hook existiert.\n\nBenutzerdefinierte Agenten können alle vier Endpoints direkt aufrufen: /busy, /waiting, /done, /idle.";
+"about.hooks_desc" = "Öffne Einstellungen → Integration und klicke auf »Automatisch installieren«. AgentFrame schreibt die Hooks direkt in die Konfigurationsdatei deines Agenten — kein manuelles Editieren nötig. Für Claude Code werden fünf Hooks installiert:";
+"about.hook_pretooluse" = "Vor jedem Tool-Aufruf";
+"about.hook_posttooluse" = "Nach jedem Tool-Aufruf — hält den Rahmen im Beschäftigt-Status";
+"about.hook_notification" = "Wenn Claude deine Aufmerksamkeit benötigt";
+"about.hook_stop" = "Wenn die Hauptsitzung abgeschlossen ist";
+"about.hook_subagent_stop" = "Wenn ein Subagent abgeschlossen ist (parallele Aufgaben)";
+"about.hook_notification_note" = "Hinweis: Der Notification-Hook wird nur ausgelöst, wenn Claude Code intern eine Benachrichtigung sendet — nicht jedes Mal, wenn Claude eine Frage im Text ausgibt. In manchen Fällen bleibt der Rahmen auf Beschäftigt statt auf Wartet zu wechseln.";
 "about.customize_hint" = "Anpassbar — Farben, Rahmendicke, Bildschirmkanten und Flash-Effekt lassen sich in den Einstellungen frei konfigurieren.";
 
 /* Menu Bar */
@@ -113,6 +132,7 @@
 "menu.test_idle" = "Test: Bereit";
 "menu.about" = "Über";
 "menu.settings" = "Einstellungen…";
+"menu.support_kofi" = "Support on Ko-fi";
 "menu.quit" = "Beenden";
 "menu.server_port_unavailable" = "Port %d nicht verfügbar";
 "menu.server_starting" = "Server startet…";

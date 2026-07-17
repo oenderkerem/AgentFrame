@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="bg">
+      <rect width="512" height="512" rx="115"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="115" fill="#1C1C1E"/>
+
+  <!-- Brackets clipped to rounded square -->
+  <g clip-path="url(#bg)">
+
+    <!-- TL: orange -->
+    <rect x="84" y="84" width="131" height="42" fill="#FF9F0A"/>
+    <rect x="84" y="84" width="42"  height="131" fill="#FF9F0A"/>
+
+    <!-- TR: yellow -->
+    <rect x="297" y="84" width="131" height="42"  fill="#FFD60A"/>
+    <rect x="386" y="84" width="42"  height="131" fill="#FFD60A"/>
+
+    <!-- BR: green -->
+    <rect x="297" y="386" width="131" height="42"  fill="#30D158"/>
+    <rect x="386" y="297" width="42"  height="131" fill="#30D158"/>
+
+    <!-- BL: teal -->
+    <rect x="84" y="386" width="131" height="42"  fill="#30CEC0"/>
+    <rect x="84" y="297" width="42"  height="131" fill="#30CEC0"/>
+
+  </g>
+</svg>

@@ -4,20 +4,52 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+---
+
+## [1.2.0] - 2026-07-17
+
 ### Added
-- **Waiting-for-input status** — new intermediate state (blue frame) between busy and done; activated via `/waiting` HTTP endpoint or file value `"waiting"`; color, opacity and sound configurable in Settings
-- Claude Code: Notification hook auto-installed alongside PreToolUse and Stop so the frame switches to waiting whenever Claude prompts for user input
-- Option to disable live mouse tracking in follow-cursor mode — eliminates background polling on multi-monitor setups; frame repositions on next status change instead of every 250 ms (Settings → General → Screen)
+- **Namespaced HTTP endpoints** — all HTTP status endpoints now use the `/agent_frame/` path prefix (e.g. `/agent_frame/busy`, `/agent_frame/done`) so AgentFrame hooks can be reliably identified and removed without touching hooks from other tools; **breaking change**: old paths (`/busy`, `/done`, `/waiting`, `/idle`, `/status`) are no longer accepted
+- **Automatic hook removal on mode switch** — when switching between HTTP Server and File Watching, AgentFrame prompts to automatically remove the previously installed hooks from all supported agent configurations (Claude Code, Codex)
+- **Hook inspector in Integration tab** — a new "Installed Hooks" section shows which hook events are currently active per agent, with a one-click Remove All button
+- **PostToolUse hook for Claude Code** — auto-installer now writes four hooks: `PreToolUse`, `PostToolUse` (both send `busy`), `Notification` (`waiting`), and `Stop` (`done`); `PostToolUse` keeps the frame in the busy state between consecutive tool calls
+- **curl `--max-time 1 … || true`** — generated hook commands now time out after 1 second and always exit 0, so a non-running AgentFrame neither blocks Claude's tool execution nor shows a hook error in the terminal
+- **Stuck-busy auto-reset** — new setting in General → Frame: if the frame stays busy with no new signal for a configurable duration (default 5 min), it resets to idle automatically; the next tool call immediately restores busy state, so this only affects sessions where the agent exits without sending a done signal
+- **Apply & Restart button feedback** — the button turns orange when transport settings have changed and need a restart; after clicking it cycles through "Restarting…" → "✓ Restarted" so the result is always visible
+- **Icons for Settings and About menu items** — `gearshape` and `info.circle` SF Symbols added to the menu bar menu
+- **App icon in About window** — the About window header now shows the actual app icon instead of a generic SF Symbol placeholder
+- **Hooks reference table in About window** — lists all four Claude Code hooks, when each fires, and which signal it sends; includes a note on the Notification hook limitation
+- **SVG assets** — `Resources/icon.svg` (512×512 app icon) and `Resources/banner.svg` (1200×628 LinkedIn post image) added to the repository
 
 ### Fixed
-- Multi-monitor: screen picker in Settings now refreshes dynamically when monitors are connected or disconnected (no longer requires reopening Settings)
-- Multi-monitor: frame overlay now follows the mouse cursor in real time while busy or done (250 ms polling timer)
-- Gatekeeper no longer blocks the DMG build — app is now signed ad-hoc before packaging so macOS shows "unidentified developer" instead of "app is damaged"
-- Update-available banner no longer appears in dev builds (version string containing `"dev"` skips the update check)
+- **Spurious waiting frame after task completion** — the `Notification` hook fires for all Claude Code notifications including task-completion alerts, not only "waiting for input" events; the `waiting` signal is now ignored unless the current state is already `busy`
+- **Double flash on task completion** — `SubagentStop` was firing alongside `Stop` for every session (not just multi-agent ones); because the auto-reset could elapse between the two signals, the deduplication was bypassed and the flash triggered twice; `SubagentStop` removed from default hooks
+- **Status signal race condition** — HTTP and file watcher callbacks now always dispatch to the main queue before calling `handle()`, eliminating a potential data race on `currentStatus` and the busy-timeout timer
+- **`make install` / `make run` leaving duplicate app entries** — install now removes the existing `/Applications/AgentFrame.app` before copying; `make run` installs first and opens from `/Applications/` so macOS Launch Services never registers two separate app paths
+
+### Changed
+- **"Both" transport mode removed from UI** — the mode picker now offers only HTTP Server and File Watching; the internal value is preserved for backward compatibility but no longer selectable
 
 ---
 
-### Added (initial release)
+## [1.1.0]
+
+### Added
+- **Waiting-for-input status** — new intermediate state between busy and done; activated via `/waiting` HTTP endpoint or file value `"waiting"`; color, opacity, and sound configurable in Settings
+- **Notification hook for Claude Code** — auto-installed alongside PreToolUse and Stop so the frame switches to waiting whenever Claude prompts for user input
+- **Disable live mouse tracking** — new toggle in Settings → General → Screen to turn off the 250 ms polling timer on multi-monitor setups; frame repositions on the next status change instead
+
+### Fixed
+- Multi-monitor: screen picker in Settings now refreshes dynamically when monitors are connected or disconnected
+- Multi-monitor: frame overlay follows the mouse cursor in real time while busy or done
+- Gatekeeper no longer blocks the DMG build — app is now signed ad-hoc before packaging
+- Update-available banner no longer appears in dev builds
+
+---
+
+## [1.0.0]
+
+### Added
 - Menu bar app with static icon (adapts to light/dark mode)
 - Colored screen frame on any combination of edges (top / right / bottom / left)
 - Individual color and opacity per status (busy / done)

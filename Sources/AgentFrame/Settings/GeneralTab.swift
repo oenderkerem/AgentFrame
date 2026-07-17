@@ -94,7 +94,24 @@ struct GeneralTab: View {
                             .monospacedDigit()
                     }
                 }
-                
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle(settings.t("display.stuck_busy_reset"), isOn: $settings.stuckBusyResetEnabled)
+                    Text(settings.t("display.stuck_busy_reset_help"))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if settings.stuckBusyResetEnabled {
+                    HStack {
+                        Text(settings.t("display.stuck_busy_reset_delay"))
+                        Slider(value: $settings.stuckBusyResetMinutes, in: 5.0...120.0, step: 5.0)
+                        Text("\(Int(settings.stuckBusyResetMinutes)) min")
+                            .frame(width: 55, alignment: .trailing)
+                            .monospacedDigit()
+                    }
+                }
+
                 Toggle(settings.t("display.flash_enable"), isOn: $settings.flashEnabled)
 
                 if settings.flashEnabled {

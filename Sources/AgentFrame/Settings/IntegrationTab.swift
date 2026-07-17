@@ -12,6 +12,13 @@ struct IntegrationTab: View {
     @ObservedObject var statusMonitor: StatusMonitor
     @State private var copied = false
     @State private var installResult: HookInstallResult? = nil
+    @State private var removeHooksMessage: String? = nil
+    @State private var removeHooksFailed  = false
+    @State private var pendingRestart     = false
+    @State private var restartPhase       = RestartPhase.idle
+    @State private var installedHooks     = InstalledHooks()
+
+    private enum RestartPhase { case idle, restarting, done }
 
     private func transportRow(icon: String, titleKey: String, descKey: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
@@ -48,6 +55,42 @@ struct IntegrationTab: View {
         settings.agentProvider == .claudeCode || settings.agentProvider == .codex
     }
 
+    private var restartButtonLabel: String {
+        switch restartPhase {
+        case .idle:       return settings.t("integration.apply_restart")
+        case .restarting: return settings.t("integration.restarting")
+        case .done:       return settings.t("integration.restarted")
+        }
+    }
+
+    private func promptRemoveHooks() {
+        let alert = NSAlert()
+        alert.messageText     = settings.t("integration.remove_hooks_title")
+        alert.informativeText = settings.t("integration.remove_hooks_msg")
+        alert.addButton(withTitle: settings.t("integration.remove_hooks_confirm"))
+        alert.addButton(withTitle: settings.t("integration.remove_hooks_skip"))
+        alert.alertStyle = .warning
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let results  = settings.removeAllAgentHooks()
+        let failures = results.values.compactMap { result -> String? in
+            if case .failure(let msg) = result { return msg }
+            return nil
+        }
+
+        removeHooksFailed  = !failures.isEmpty
+        removeHooksMessage = failures.isEmpty
+            ? settings.t("integration.hooks_removed")
+            : failures.joined(separator: "\n")
+        installedHooks = settings.readInstalledHooks()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            removeHooksMessage = nil
+            removeHooksFailed  = false
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Form {
@@ -82,9 +125,18 @@ struct IntegrationTab: View {
                 Section(settings.t("integration.transport")) {
                     Picker(settings.t("integration.method"), selection: Binding(
                         get: { settings.integrationMode },
-                        set: { settings.integrationMode = $0 }
+                        set: { newMode in
+                            let oldMode = settings.integrationMode
+                            settings.integrationMode = newMode
+                            pendingRestart = true
+                            if newMode == .file && (oldMode == .http || oldMode == .both) {
+                                DispatchQueue.main.async { promptRemoveHooks() }
+                            } else if newMode == .http && (oldMode == .file || oldMode == .both) {
+                                DispatchQueue.main.async { promptRemoveHooks() }
+                            }
+                        }
                     )) {
-                        ForEach(IntegrationMode.allCases, id: \.rawValue) { m in
+                        ForEach(IntegrationMode.allCases.filter { $0 != .both }, id: \.rawValue) { m in
                             Text(m.label(settings)).tag(m)
                         }
                     }
@@ -106,6 +158,12 @@ struct IntegrationTab: View {
                                       text: $settings.statusFilePath)
                                 .textFieldStyle(.roundedBorder)
                         }
+                    }
+
+                    if let msg = removeHooksMessage {
+                        Label(msg, systemImage: removeHooksFailed ? "xmark.circle.fill" : "checkmark.circle.fill")
+                            .foregroundStyle(removeHooksFailed ? .red : .green)
+                            .font(.caption)
                     }
                 }
 
@@ -138,6 +196,7 @@ struct IntegrationTab: View {
                         if supportsAutoInstall {
                             Button(settings.t("integration.install_auto")) {
                                 installResult = settings.installHooks()
+                                installedHooks = settings.readInstalledHooks()
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 5) { installResult = nil }
                             }
                         }
@@ -159,18 +218,61 @@ struct IntegrationTab: View {
                         }
                     }
                 }
+                Section(settings.t("integration.installed_hooks_title")) {
+                    if installedHooks.isEmpty {
+                        Label(settings.t("integration.no_hooks_installed"), systemImage: "checkmark.circle")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        if !installedHooks.claudeCode.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label("Claude Code — ~/.claude/settings.json",
+                                      systemImage: "doc.text")
+                                    .font(.callout)
+                                Text(installedHooks.claudeCode.joined(separator: "  ·  "))
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        if !installedHooks.codex.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label("Codex — ~/.codex/config.json",
+                                      systemImage: "doc.text")
+                                    .font(.callout)
+                                Text(installedHooks.codex.joined(separator: "  ·  "))
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Button(settings.t("integration.remove_hooks_manual"), role: .destructive) {
+                            promptRemoveHooks()
+                        }
+                    }
+                }
             }
             .formStyle(.grouped)
             .padding([.top, .horizontal])
+            .onAppear { installedHooks = settings.readInstalledHooks() }
+            .onChange(of: settings.httpPort)      { _ in pendingRestart = true }
+            .onChange(of: settings.statusFilePath) { _ in pendingRestart = true }
 
             Divider()
 
             HStack {
                 Spacer()
-                Button(settings.t("integration.apply_restart")) {
+                Button(restartButtonLabel) {
+                    pendingRestart = false
+                    restartPhase   = .restarting
                     statusMonitor.restart()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        restartPhase = .done
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            restartPhase = .idle
+                        }
+                    }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(restartPhase == .done ? .green : (pendingRestart ? .orange : nil))
+                .disabled(restartPhase == .restarting)
                 Spacer()
             }
             .padding(12)

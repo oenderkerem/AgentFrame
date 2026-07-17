@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 628" width="1200" height="628">
+
+  <!-- Background -->
+  <rect width="1200" height="628" fill="#1C1C1E"/>
+
+  <!-- ── Corner bracket frame ─────────────────────────────────────────────
+       arm=200  thick=48  edge=48
+       Corner anchors (in SVG coords):
+         TL → (48,  48)   TR → (1152, 48)
+         BL → (48,  580)  BR → (1152, 580)
+  ──────────────────────────────────────────────────────────────────────── -->
+
+  <!-- TL: orange -->
+  <rect x="48"  y="48"  width="200" height="48"  fill="#FF9F0A"/>
+  <rect x="48"  y="48"  width="48"  height="200" fill="#FF9F0A"/>
+
+  <!-- TR: yellow -->
+  <rect x="952" y="48"  width="200" height="48"  fill="#FFD60A"/>
+  <rect x="1104" y="48" width="48"  height="200" fill="#FFD60A"/>
+
+  <!-- BR: green -->
+  <rect x="952"  y="532" width="200" height="48"  fill="#30D158"/>
+  <rect x="1104" y="380" width="48"  height="200" fill="#30D158"/>
+
+  <!-- BL: teal -->
+  <rect x="48" y="532" width="200" height="48"  fill="#30CEC0"/>
+  <rect x="48" y="380" width="48"  height="200" fill="#30CEC0"/>
+
+  <!-- ── App icon (150×150) centered at (600, 200) ───────────────────────
+       Scale: 150/512 ≈ 0.293   Translate: (525, 125)
+  ──────────────────────────────────────────────────────────────────────── -->
+  <g transform="translate(525,125) scale(0.29296875)">
+    <rect width="512" height="512" rx="115" fill="#2C2C2E"/>
+
+    <!-- TL: orange -->
+    <rect x="84" y="84" width="131" height="42"  fill="#FF9F0A"/>
+    <rect x="84" y="84" width="42"  height="131" fill="#FF9F0A"/>
+
+    <!-- TR: yellow -->
+    <rect x="297" y="84" width="131" height="42"  fill="#FFD60A"/>
+    <rect x="386" y="84" width="42"  height="131" fill="#FFD60A"/>
+
+    <!-- BR: green -->
+    <rect x="297" y="386" width="131" height="42"  fill="#30D158"/>
+    <rect x="386" y="297" width="42"  height="131" fill="#30D158"/>
+
+    <!-- BL: teal -->
+    <rect x="84" y="386" width="131" height="42"  fill="#30CEC0"/>
+    <rect x="84" y="297" width="42"  height="131" fill="#30CEC0"/>
+  </g>
+
+  <!-- ── Text ────────────────────────────────────────────────────────────── -->
+
+  <!-- App name -->
+  <text
+    x="600" y="350"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="80" font-weight="700"
+    fill="#FFFFFF"
+    text-anchor="middle">AgentFrame</text>
+
+  <!-- Tagline -->
+  <text
+    x="600" y="402"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="26" font-weight="400"
+    fill="#8E8E93"
+    text-anchor="middle">Screen frame indicator for AI coding agents</text>
+
+</svg>
