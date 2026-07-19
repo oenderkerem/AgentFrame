@@ -6,6 +6,7 @@ final class UpdateChecker: ObservableObject {
     static let releasesURL         = "https://github.com/oenderkerem/AgentFrame/releases/latest"
 
     @Published var availableVersion: String? = nil
+    @Published var releaseNotes: String? = nil
 
     private var timer: Timer?
     private let interval: TimeInterval = 6 * 3600  // every 6 hours
@@ -36,8 +37,15 @@ final class UpdateChecker: ObservableObject {
                   let tag  = json["tag_name"] as? String else { return }
 
             let remote = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
+            let body   = json["body"] as? String
             DispatchQueue.main.async {
-                self.availableVersion = self.isNewer(remote) ? remote : nil
+                if self.isNewer(remote) {
+                    self.availableVersion = remote
+                    self.releaseNotes     = body?.trimmingCharacters(in: .whitespacesAndNewlines)
+                } else {
+                    self.availableVersion = nil
+                    self.releaseNotes     = nil
+                }
             }
         }.resume()
     }

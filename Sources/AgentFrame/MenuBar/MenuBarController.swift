@@ -155,7 +155,11 @@ final class MenuBarController {
     // MARK: - Actions
 
     @objc private func openUpdate() {
-        updateChecker.openReleasesPage()
+        guard let delegate = NSApp.delegate as? AppDelegate else {
+            updateChecker.openReleasesPage()
+            return
+        }
+        delegate.showUpdateWindow()
     }
 
     @objc private func openKofi() {

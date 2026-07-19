@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -6,6 +7,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var overlayManager:    FrameOverlayManager!
     private(set) var statusMonitor:     StatusMonitor!
     private(set) var updateChecker:     UpdateChecker!
+
+    private var updateWC: UpdateWindowController?
+    private var cancellables = Set<AnyCancellable>()
 
     let settings = AppSettings.shared
 
@@ -49,6 +53,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
+
+        observeUpdates()
+    }
+
+    private func observeUpdates() {
+        updateChecker.$availableVersion
+            .compactMap { $0 }
+            .filter { version in
+                let shown = UserDefaults.standard.string(forKey: "lastShownUpdateVersion")
+                return shown != version
+            }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] version in
+                UserDefaults.standard.set(version, forKey: "lastShownUpdateVersion")
+                self?.showUpdateWindow()
+            }
+            .store(in: &cancellables)
+    }
+
+    func showUpdateWindow() {
+        if updateWC == nil {
+            updateWC = UpdateWindowController(settings: settings, updateChecker: updateChecker)
+        }
+        updateWC?.showWindow(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func screensDidChange() {
