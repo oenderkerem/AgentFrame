@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+---
+
+## [1.3.0] - 2026-07-19
+
 ### Added
 - **Update notification window** — when a newer version is available (checked at launch and every 6 hours), AgentFrame automatically shows a compact window with the new version number, release notes rendered from GitHub, and a "Download Now" button; the window appears only once per version and can be permanently dismissed with "Skip This Version"
 
