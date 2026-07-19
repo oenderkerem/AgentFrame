@@ -123,6 +123,15 @@
 "about.hook_notification_note" = "Note: The Notification hook only fires when Claude Code sends an internal notification — not every time Claude asks a question in text. In some cases the frame may stay busy instead of switching to waiting.";
 "about.customize_hint" = "Customizable — Colors, frame thickness, screen edges, and the flash effect can all be configured in Settings.";
 
+/* Update Window */
+"update.title" = "Update Available";
+"update.new_version" = "New version: v%@";
+"update.current_version" = "Installed: v%@";
+"update.release_notes" = "What's New";
+"update.release_notes_none" = "No release notes available.";
+"update.later" = "Skip This Version";
+"update.download" = "Download Now";
+
 /* Menu Bar */
 "menu.server_port_in_use" = "⚠ Port %d in use – Open Settings";
 "menu.server_starting_warn" = "⚠ HTTP server starting…";

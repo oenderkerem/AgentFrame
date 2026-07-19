@@ -123,6 +123,15 @@
 "about.hook_notification_note" = "Hinweis: Der Notification-Hook wird nur ausgelöst, wenn Claude Code intern eine Benachrichtigung sendet — nicht jedes Mal, wenn Claude eine Frage im Text ausgibt. In manchen Fällen bleibt der Rahmen auf Beschäftigt statt auf Wartet zu wechseln.";
 "about.customize_hint" = "Anpassbar — Farben, Rahmendicke, Bildschirmkanten und Flash-Effekt lassen sich in den Einstellungen frei konfigurieren.";
 
+/* Update Window */
+"update.title" = "Update verfügbar";
+"update.new_version" = "Neue Version: v%@";
+"update.current_version" = "Installiert: v%@";
+"update.release_notes" = "Was ist neu";
+"update.release_notes_none" = "Keine Release Notes verfügbar.";
+"update.later" = "Diese Version überspringen";
+"update.download" = "Jetzt herunterladen";
+
 /* Menu Bar */
 "menu.server_port_in_use" = "⚠ Port %d belegt – Einstellungen öffnen";
 "menu.server_starting_warn" = "⚠ HTTP-Server startet…";
