@@ -11,6 +11,8 @@ final class MenuBarController {
     private var aboutWC:        AboutWindowController?
     private var cancellables = Set<AnyCancellable>()
 
+    var statusItemButton: NSButton? { statusItem.button }
+
     private enum MenuTag: Int { case statusLabel = 1 }
 
     init(settings: AppSettings, overlayManager: FrameOverlayManager,
@@ -61,6 +63,20 @@ final class MenuBarController {
         labelItem.isEnabled = false
         labelItem.tag = MenuTag.statusLabel.rawValue
         menu.addItem(labelItem)
+
+        // Per-agent items (multi-agent mode)
+        if settings.multiAgentEnabled && settings.multiAgentMenuItemsEnabled {
+            for agent in statusMonitor.registry.activeAgents {
+                let displayName = statusMonitor.registry.resolvedDisplayName(for: agent)
+                let focusable = WindowFocusManager.canFocus(agent)
+                let item = NSMenuItem(title: "", action: focusable ? #selector(focusAgent(_:)) : nil, keyEquivalent: "")
+                item.target = focusable ? self : nil
+                item.isEnabled = focusable
+                item.representedObject = agent.id
+                item.attributedTitle = agentMenuItemString(name: displayName, status: agent.status, focusable: focusable)
+                menu.addItem(item)
+            }
+        }
 
         // Server status
         if settings.integrationMode == .http || settings.integrationMode == .both {
@@ -141,6 +157,41 @@ final class MenuBarController {
                 string: "◌ \(settings.t("menu.server_starting"))",
                 attributes: [.foregroundColor: NSColor.secondaryLabelColor, .font: small])
         }
+    }
+
+    @objc private func focusAgent(_ sender: NSMenuItem) {
+        guard let agentId = sender.representedObject as? String,
+              let agent = statusMonitor.registry.agents.first(where: { $0.id == agentId }) else { return }
+        WindowFocusManager.focus(agent: agent)
+    }
+
+    private func agentMenuItemString(name: String, status: AgentStatus, focusable: Bool) -> NSAttributedString {
+        let font  = NSFont.menuFont(ofSize: 0)
+        let small = NSFont.menuFont(ofSize: NSFont.smallSystemFontSize)
+
+        let dotColor: NSColor
+        switch status {
+        case .busy:    dotColor = settings.busyNSColor
+        case .waiting: dotColor = settings.waitingNSColor
+        case .done:    dotColor = settings.doneNSColor
+        case .idle:    dotColor = .secondaryLabelColor
+        }
+
+        let str = NSMutableAttributedString(
+            string: "● ",
+            attributes: [.foregroundColor: dotColor, .font: font])
+        str.append(NSAttributedString(
+            string: name,
+            attributes: [.foregroundColor: NSColor.labelColor, .font: small]))
+        str.append(NSAttributedString(
+            string: "  \(statusTitle(for: status))",
+            attributes: [.foregroundColor: NSColor.secondaryLabelColor, .font: small]))
+        if focusable {
+            str.append(NSAttributedString(
+                string: "  ↗",
+                attributes: [.foregroundColor: NSColor.tertiaryLabelColor, .font: small]))
+        }
+        return str
     }
 
     private func statusTitle(for status: AgentStatus) -> String {

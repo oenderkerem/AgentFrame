@@ -132,6 +132,42 @@
 "update.later" = "Diese Version überspringen";
 "update.download" = "Jetzt herunterladen";
 
+/* Multi-Agent Tab */
+"settings.tab_multiagent" = "Multi-Agent";
+"multiagent.enable" = "Multi-Agent-Support aktivieren";
+"multiagent.enable_help" = "Mehrere laufende KI-Agenten unabhängig voneinander verfolgen. Jeder Agent identifiziert sich anhand seines Projektordnernamens — kein PID oder Session-ID erforderlich.";
+"multiagent.section_menubar" = "Menüleiste";
+"multiagent.menu_items" = "Status pro Agent im Menü anzeigen";
+"multiagent.popup_enabled" = "Popup bei Statuswechsel anzeigen";
+"multiagent.popup_help" = "Ein kleiner Badge erscheint unter dem Menüleisten-Icon, wenn ein Agent seinen Status ändert.";
+"multiagent.popup_duration" = "Popup-Dauer";
+"multiagent.section_window" = "Statusfenster";
+"multiagent.window_enabled" = "Statusfenster anzeigen";
+"multiagent.window_help" = "Ein schwebendes Fenster mit allen aktiven Agenten und deren aktuellem Status.";
+"multiagent.window_permanent" = "Fenster dauerhaft anzeigen";
+"multiagent.window_corner" = "Ecke";
+"multiagent.corner_topleft" = "Oben links";
+"multiagent.corner_topright" = "Oben rechts";
+"multiagent.corner_bottomleft" = "Unten links";
+"multiagent.corner_bottomright" = "Unten rechts";
+"multiagent.window_screen" = "Bildschirm";
+"multiagent.window_color" = "Fensterfarbe";
+"multiagent.window_font_size" = "Schriftgröße";
+"multiagent.file_mode_hint" = "Im Datei-Modus schreibt jeder Agent in eine eigene Datei im Verzeichnis unten. Der Hook-Snippet im Integration-Tab wird automatisch angepasst.";
+"multiagent.hud_hide" = "Ausblenden";
+"multiagent.hook_prompt_title" = "Hooks müssen aktualisiert werden";
+"multiagent.hook_prompt_msg" = "Der Multi-Agent-Modus benötigt aktualisierte Hooks, die den Agentnamen und die Prozess-ID mitsenden. Ohne diese können Statuswechsel nicht einzelnen Agenten zugeordnet werden und das Fokussieren von Fenstern funktioniert nicht.\n\nMöchtest du die Hooks jetzt neu installieren?";
+"multiagent.hook_prompt_msg_custom" = "Der Multi-Agent-Modus benötigt aktualisierte Hooks mit Agentname und Prozess-ID. Bitte kopiere den aktualisierten Snippet aus dem Integration-Tab und aktualisiere deine Hooks manuell.";
+"multiagent.hook_prompt_install" = "Hooks neu installieren";
+"multiagent.hook_prompt_later" = "Später";
+"multiagent.hook_prompt_ok" = "OK";
+
+/* Agent Status Labels */
+"status.busy" = "Aktiv";
+"status.waiting" = "Wartet";
+"status.done" = "Fertig";
+"status.idle" = "Bereit";
+
 /* Menu Bar */
 "menu.server_port_in_use" = "⚠ Port %d belegt – Einstellungen öffnen";
 "menu.server_starting_warn" = "⚠ HTTP-Server startet…";
