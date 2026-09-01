@@ -6,6 +6,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.4.0] - 2026-09-01
+
+### Added
+- **Multi-Agent Support** — new Settings → Multi-Agent tab to track multiple running AI agents independently; each agent identifies itself by its project folder name (`basename $PWD`), making identifiers human-readable without PIDs or session IDs; can be enabled/disabled independently of all other features
+- **Per-agent status in menu bar** — when multi-agent mode is active, each non-idle agent appears as its own item in the menu bar dropdown with a colored dot, name, and current status; clickable to focus the agent's terminal window when focus info is available
+- **Menu bar popup on status change** — a small badge appears below the menu bar icon whenever any agent changes state, showing the agent name and new status; clickable to focus the agent's terminal window; auto-dismisses after a configurable duration (1–15 s); can be toggled independently of other multi-agent features
+- **Floating status window (HUD)** — an optional non-activating panel listing all active agents; configurable corner (top-left / top-right / bottom-left / bottom-right), screen, opacity, background color, and font size; can be set to permanent or auto-hide after each status change; each row is clickable to focus the corresponding terminal window; Hide button dismisses until next status change
+- **Window focus** — clicking any agent entry (menu, popup, or HUD row) brings the corresponding terminal window to front; for iTerm2 and Terminal.app the exact tab is focused via AppleScript; for all other hosts (VS Code, IntelliJ, Cursor, Zed, …) the owning application is activated via process-tree traversal — no special permissions required beyond a one-time Automation prompt for tab-level focusing
+- **Multi-agent file mode** — in file-watching mode with multi-agent enabled, each agent writes to its own file inside a configurable directory (`~/.claude/agentframe/` by default); AgentFrame polls the directory every 500 ms and attributes changes by filename; eliminates single-file write conflicts
+- **Hook snippets updated for multi-agent** — when multi-agent mode is active, generated hook commands automatically include `$(basename $PWD)` as the agent name, `$PPID` for process-tree window focus, and `$TERM_SESSION_ID` / `$ITERM_SESSION_ID` for precise tab focusing in Terminal.app and iTerm2; re-install or copy the updated snippet after enabling
+- **Per-agent waiting filter** — in multi-agent mode the `waiting` signal is only accepted for agents already in the `busy` state, matching the existing single-agent behavior on a per-agent basis
+- **Stuck-busy timeout in multi-agent mode** — when the aggregate status stays busy beyond the configured threshold, all individually stuck agents are reset to idle
+- **Hide Frame menu item** — new menu bar action that hides the colored frame immediately until the next status change arrives; no settings change required; item is disabled while the frame is already idle
+
+### Changed
+- **HUD Hide button redesigned** — the button is now a standalone element below the status window (not inside it), full-width, with visible background, hover state (hand cursor + highlight), and larger font for better readability
+- **Status label and server port combined** — when HTTP mode is active, the menu bar status label and the server port indicator are merged into a single line instead of two separate items
+
+---
+
 ## [1.3.0] - 2026-07-19
 
 ### Added

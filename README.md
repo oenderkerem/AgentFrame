@@ -25,6 +25,8 @@ A lightweight macOS menu bar app that draws a colored border around your screen 
 - Launch at login
 - Status input via **HTTP** (default port 7842) or **file watching** — your choice
 - Installed hooks visible in Settings with one-click removal
+- **Multi-agent support** — track multiple agents running in parallel, each identified by its project folder name
+- **Hide Frame** — menu bar action that hides the frame until the next status change, without touching any settings
 - UI available in **English** and **German**
 
 ### How the app looks like
@@ -143,12 +145,22 @@ AgentFrame also shows a ready-to-copy snippet in **Settings → Integration**.
 If you prefer not to use HTTP, switch to **File Watching** in Settings. Then use:
 
 ```bash
-# in your hook command:
-echo busy    > ~/.claude/agent_frame_status   # busy
-echo waiting > ~/.claude/agent_frame_status   # waiting for input
-echo done    > ~/.claude/agent_frame_status   # done
-echo idle    > ~/.claude/agent_frame_status   # idle
+# Single-agent (default):
+echo busy    > ~/.claude/agent_frame_status
+echo waiting > ~/.claude/agent_frame_status
+echo done    > ~/.claude/agent_frame_status
+echo idle    > ~/.claude/agent_frame_status
 ```
+
+With **Multi-Agent Support** enabled in file mode, each agent writes to its own file inside a shared directory. The filename becomes the agent's display name:
+
+```bash
+# Multi-agent file mode — each agent writes to its own file:
+echo busy > ~/.claude/agentframe/$(basename $PWD)
+echo done > ~/.claude/agentframe/$(basename $PWD)
+```
+
+AgentFrame watches the entire directory and attributes each change to the corresponding agent automatically. The directory path is configurable in **Settings → Multi-Agent**.
 
 ---
 
@@ -183,6 +195,28 @@ POST http://localhost:<port>/agent_frame/status   →  body: {"status":"busy|wai
 
 The port defaults to `7842` and can be changed in **Settings → Integration**.
 
+### Multi-agent JSON body (optional)
+
+When **Multi-Agent Support** is enabled, include agent metadata in the request body so AgentFrame can attribute status changes and enable window focusing:
+
+```json
+{
+  "name":          "my-project",
+  "pid":           "12345",
+  "term_session":  "$TERM_SESSION_ID",
+  "iterm_session": "$ITERM_SESSION_ID"
+}
+```
+
+| Field | Purpose |
+|---|---|
+| `name` | Human-readable agent identifier shown in the UI — use `$(basename $PWD)` |
+| `pid` | Shell PID (`$PPID`) — used to find and focus any terminal host via process tree |
+| `term_session` | macOS Terminal.app session ID — enables precise tab focus |
+| `iterm_session` | iTerm2 session ID — enables precise tab focus |
+
+All fields are optional and ignored when multi-agent mode is disabled. The Integration tab generates the correct snippet automatically.
+
 ---
 
 ## Using with any agent
@@ -198,6 +232,33 @@ curl -s --max-time 1 -X POST http://localhost:<port>/agent_frame/done   # agent 
 
 ---
 
+## Multi-Agent Support
+
+Enable **Settings → Multi-Agent** to track multiple agents running in parallel — for example, one Claude Code session per project.
+
+Each agent identifies itself by its project folder name (`basename $PWD`). If two agents share the same folder name, AgentFrame automatically appends a counter (`my-project (2)`).
+
+### What's shown
+
+| Feature | Where | Configurable |
+|---|---|---|
+| Per-agent status items | Menu bar dropdown | Toggle in Settings → Multi-Agent |
+| Status change popup | Below menu bar icon | Toggle + duration in Settings → Multi-Agent |
+| HUD window | Corner of any screen | Toggle, corner, screen, color, opacity, font size |
+| Hide Frame | Menu bar → "Hide Frame" | Hides the frame until the next status change |
+
+### Focusing the agent's window
+
+Click any agent entry — in the menu, the popup, or a HUD row — to bring its terminal to front:
+
+- **iTerm2** — the exact tab is focused via AppleScript (`$ITERM_SESSION_ID`)
+- **Terminal.app** — the exact tab is focused via AppleScript (`$TERM_SESSION_ID`)
+- **VS Code, IntelliJ, Cursor, Zed, and all other hosts** — the application is activated by walking up the process tree from `$PPID`; no special permissions beyond a one-time macOS Automation prompt for AppleScript-based focusing
+
+Window focus requires the hooks to include `$PPID` and session IDs. The Integration tab generates the correct commands automatically when multi-agent mode is active.
+
+---
+
 ## Settings overview
 
 | Tab | What you configure |
@@ -207,6 +268,7 @@ curl -s --max-time 1 -X POST http://localhost:<port>/agent_frame/done   # agent 
 | General → Frame → Screen | Which monitor to draw on, follow-cursor mode, live tracking toggle |
 | General → Frame → Flash | Enable flash, persistent until click, flash duration |
 | General → Preview | Test buttons to trigger busy / waiting / done / idle manually |
+| Multi-Agent | Enable multi-agent mode, per-agent menu items, popup badge, HUD window (corner, screen, color, opacity, font size) |
 | Integration | Agent provider, transport (HTTP / file), port, hook snippet, auto-install / remove hooks, installed hooks inspector |
 
 ---
@@ -217,16 +279,21 @@ Pull requests are welcome. For larger changes, open an issue first to discuss wh
 
 ### Releasing a new version
 
-Releases are automated via GitHub Actions. To publish a new version:
+Releases are automated via GitHub Actions. Steps:
+
+1. Merge the feature branch into `main`
+2. Tag the merge commit on `main` and push the tag:
 
 ```bash
 git tag v<major>.<minor>.<patch>
 git push origin v<major>.<minor>.<patch>
 ```
 
+3. Open the GitHub Release that the workflow creates and paste in the release notes
+
 The workflow will build the app, package it as a DMG, and publish a GitHub Release with the DMG attached. The version number is read from the tag — no manual edits to `Info.plist` or the Makefile required.
 
-The tag must follow the `v<major>.<minor>.<patch>` format and should be pushed from the **main** branch.
+The tag must follow the `v<major>.<minor>.<patch>` format and must be pushed from the **main** branch.
 
 ---
 

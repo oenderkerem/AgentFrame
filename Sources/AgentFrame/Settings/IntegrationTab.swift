@@ -37,9 +37,11 @@ struct IntegrationTab: View {
 
     private var snippet: String {
         settings.agentProvider.hooksSnippet(
-            port:     settings.httpPort,
-            filePath: (settings.statusFilePath as NSString).expandingTildeInPath,
-            mode:     settings.integrationMode
+            port:       settings.httpPort,
+            filePath:   (settings.statusFilePath as NSString).expandingTildeInPath,
+            dirPath:    (settings.multiAgentDirPath as NSString).expandingTildeInPath,
+            mode:       settings.integrationMode,
+            multiAgent: settings.multiAgentEnabled
         )
     }
 

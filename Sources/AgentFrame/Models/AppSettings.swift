@@ -28,6 +28,19 @@ enum IntegrationMode: Int, CaseIterable {
     }
 }
 
+enum WindowCorner: Int, CaseIterable {
+    case topLeft = 0, topRight = 1, bottomLeft = 2, bottomRight = 3
+
+    func label(_ s: AppSettings) -> String {
+        switch self {
+        case .topLeft:     return s.t("multiagent.corner_topleft")
+        case .topRight:    return s.t("multiagent.corner_topright")
+        case .bottomLeft:  return s.t("multiagent.corner_bottomleft")
+        case .bottomRight: return s.t("multiagent.corner_bottomright")
+        }
+    }
+}
+
 // MARK: - AgentProvider
 // Add new cases here to support additional AI agents.
 enum AgentProvider: Int, CaseIterable {
@@ -43,13 +56,20 @@ enum AgentProvider: Int, CaseIterable {
         }
     }
 
-    func hooksSnippet(port: Int, filePath: String, mode: IntegrationMode) -> String {
-        let httpBusy    = "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/busy || true"
-        let httpWaiting = "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/waiting || true"
-        let httpDone    = "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/done || true"
-        let fileBusy    = "echo busy > \(filePath)"
-        let fileWaiting = "echo waiting > \(filePath)"
-        let fileDone    = "echo done > \(filePath)"
+    func hooksSnippet(port: Int, filePath: String, dirPath: String, mode: IntegrationMode, multiAgent: Bool) -> String {
+        func httpCmd(_ endpoint: String) -> String {
+            if multiAgent {
+                let body = "{\\\"name\\\":\\\"$(basename $PWD)\\\",\\\"pid\\\":\\\"$PPID\\\",\\\"term_session\\\":\\\"${TERM_SESSION_ID:-}\\\",\\\"iterm_session\\\":\\\"${ITERM_SESSION_ID:-}\\\"}"
+                return "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/\(endpoint) -H 'Content-Type: application/json' -d \"\(body)\" || true"
+            }
+            return "curl -s --max-time 1 -X POST http://localhost:\(port)/agent_frame/\(endpoint) || true"
+        }
+        let httpBusy    = httpCmd("busy")
+        let httpWaiting = httpCmd("waiting")
+        let httpDone    = httpCmd("done")
+        let fileBusy    = multiAgent ? "echo busy > \(dirPath)/$(basename $PWD)"    : "echo busy > \(filePath)"
+        let fileWaiting = multiAgent ? "echo waiting > \(dirPath)/$(basename $PWD)" : "echo waiting > \(filePath)"
+        let fileDone    = multiAgent ? "echo done > \(dirPath)/$(basename $PWD)"    : "echo done > \(filePath)"
         let busyCmd     = (mode == .file) ? fileBusy    : httpBusy
         let waitingCmd  = (mode == .file) ? fileWaiting : httpWaiting
         let doneCmd     = (mode == .file) ? fileDone    : httpDone
@@ -184,6 +204,22 @@ final class AppSettings: ObservableObject {
     @Published var stuckBusyResetEnabled: Bool   { didSet { ud.set(stuckBusyResetEnabled,  forKey: "stuckBusyResetEnabled") } }
     @Published var stuckBusyResetMinutes: Double { didSet { ud.set(stuckBusyResetMinutes,  forKey: "stuckBusyResetMinutes") } }
 
+    // Multi-Agent
+    @Published var multiAgentEnabled: Bool          { didSet { ud.set(multiAgentEnabled,          forKey: "multiAgentEnabled") } }
+    @Published var multiAgentMenuItemsEnabled: Bool { didSet { ud.set(multiAgentMenuItemsEnabled, forKey: "multiAgentMenuItemsEnabled") } }
+    @Published var multiAgentPopupEnabled: Bool     { didSet { ud.set(multiAgentPopupEnabled,     forKey: "multiAgentPopupEnabled") } }
+    @Published var multiAgentPopupDuration: Double  { didSet { ud.set(multiAgentPopupDuration,    forKey: "multiAgentPopupDuration") } }
+    @Published var multiAgentDirPath: String        { didSet { ud.set(multiAgentDirPath,          forKey: "multiAgentDirPath") } }
+
+    // Agent Status Window
+    @Published var agentWindowEnabled: Bool         { didSet { ud.set(agentWindowEnabled,         forKey: "agentWindowEnabled") } }
+    @Published var agentWindowPermanent: Bool       { didSet { ud.set(agentWindowPermanent,       forKey: "agentWindowPermanent") } }
+    @Published var agentWindowCornerRaw: Int        { didSet { ud.set(agentWindowCornerRaw,       forKey: "agentWindowCornerRaw") } }
+    @Published var agentWindowScreenIndex: Int      { didSet { ud.set(agentWindowScreenIndex,     forKey: "agentWindowScreenIndex") } }
+    @Published var agentWindowOpacity: Double       { didSet { ud.set(agentWindowOpacity,         forKey: "agentWindowOpacity") } }
+    @Published var agentWindowColorHex: String      { didSet { ud.set(agentWindowColorHex,        forKey: "agentWindowColorHex") } }
+    @Published var agentWindowFontSize: Double      { didSet { ud.set(agentWindowFontSize,        forKey: "agentWindowFontSize") } }
+
     // MARK: - Localization
 
     func t(_ key: String) -> String {
@@ -206,9 +242,14 @@ final class AppSettings: ObservableObject {
         get { AgentProvider(rawValue: agentProviderRaw) ?? .claudeCode }
         set { agentProviderRaw = newValue.rawValue }
     }
-    var busyNSColor:    NSColor { NSColor(hex: busyColorHex)    ?? .systemOrange }
-    var waitingNSColor: NSColor { NSColor(hex: waitingColorHex) ?? .systemBlue }
-    var doneNSColor:    NSColor { NSColor(hex: doneColorHex)    ?? .systemGreen }
+    var agentWindowCorner: WindowCorner {
+        get { WindowCorner(rawValue: agentWindowCornerRaw) ?? .topRight }
+        set { agentWindowCornerRaw = newValue.rawValue }
+    }
+    var busyNSColor:        NSColor { NSColor(hex: busyColorHex)       ?? .systemOrange }
+    var waitingNSColor:     NSColor { NSColor(hex: waitingColorHex)    ?? .systemBlue }
+    var doneNSColor:        NSColor { NSColor(hex: doneColorHex)       ?? .systemGreen }
+    var agentWindowNSColor: NSColor { NSColor(hex: agentWindowColorHex) ?? NSColor(white: 0.11, alpha: 1) }
 
     // MARK: - Hook installation
 
@@ -220,24 +261,47 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    private func httpMultiAgentCommand(_ endpoint: String) -> String {
+        let body = "{\\\"name\\\":\\\"$(basename $PWD)\\\",\\\"pid\\\":\\\"$PPID\\\",\\\"term_session\\\":\\\"${TERM_SESSION_ID:-}\\\",\\\"iterm_session\\\":\\\"${ITERM_SESSION_ID:-}\\\"}"
+        return "curl -s --max-time 1 -X POST http://localhost:\(httpPort)/agent_frame/\(endpoint) -H 'Content-Type: application/json' -d \"\(body)\" || true"
+    }
+
     private func busyCommand() -> String {
-        let expanded = (statusFilePath as NSString).expandingTildeInPath
-        return integrationMode == .file
-            ? "echo busy > \(expanded)"
+        if integrationMode == .file {
+            if multiAgentEnabled {
+                let dir = (multiAgentDirPath as NSString).expandingTildeInPath
+                return "echo busy > \(dir)/$(basename $PWD)"
+            }
+            return "echo busy > \((statusFilePath as NSString).expandingTildeInPath)"
+        }
+        return multiAgentEnabled
+            ? httpMultiAgentCommand("busy")
             : "curl -s --max-time 1 -X POST http://localhost:\(httpPort)/agent_frame/busy || true"
     }
 
     private func waitingCommand() -> String {
-        let expanded = (statusFilePath as NSString).expandingTildeInPath
-        return integrationMode == .file
-            ? "echo waiting > \(expanded)"
+        if integrationMode == .file {
+            if multiAgentEnabled {
+                let dir = (multiAgentDirPath as NSString).expandingTildeInPath
+                return "echo waiting > \(dir)/$(basename $PWD)"
+            }
+            return "echo waiting > \((statusFilePath as NSString).expandingTildeInPath)"
+        }
+        return multiAgentEnabled
+            ? httpMultiAgentCommand("waiting")
             : "curl -s --max-time 1 -X POST http://localhost:\(httpPort)/agent_frame/waiting || true"
     }
 
     private func doneCommand() -> String {
-        let expanded = (statusFilePath as NSString).expandingTildeInPath
-        return integrationMode == .file
-            ? "echo done > \(expanded)"
+        if integrationMode == .file {
+            if multiAgentEnabled {
+                let dir = (multiAgentDirPath as NSString).expandingTildeInPath
+                return "echo done > \(dir)/$(basename $PWD)"
+            }
+            return "echo done > \((statusFilePath as NSString).expandingTildeInPath)"
+        }
+        return multiAgentEnabled
+            ? httpMultiAgentCommand("done")
             : "curl -s --max-time 1 -X POST http://localhost:\(httpPort)/agent_frame/done || true"
     }
 
@@ -476,5 +540,17 @@ final class AppSettings: ObservableObject {
         agentProviderRaw     = d.object(forKey: "agentProviderRaw")     as? Int    ?? AgentProvider.claudeCode.rawValue
         stuckBusyResetEnabled = d.object(forKey: "stuckBusyResetEnabled") as? Bool  ?? true
         stuckBusyResetMinutes = d.object(forKey: "stuckBusyResetMinutes") as? Double ?? 5.0
+        multiAgentEnabled          = d.object(forKey: "multiAgentEnabled")          as? Bool   ?? false
+        multiAgentMenuItemsEnabled = d.object(forKey: "multiAgentMenuItemsEnabled") as? Bool   ?? true
+        multiAgentPopupEnabled     = d.object(forKey: "multiAgentPopupEnabled")     as? Bool   ?? true
+        multiAgentPopupDuration    = d.object(forKey: "multiAgentPopupDuration")    as? Double ?? 4.0
+        multiAgentDirPath          = d.string(forKey: "multiAgentDirPath")                     ?? "~/.claude/agentframe"
+        agentWindowEnabled         = d.object(forKey: "agentWindowEnabled")         as? Bool   ?? false
+        agentWindowPermanent       = d.object(forKey: "agentWindowPermanent")       as? Bool   ?? false
+        agentWindowCornerRaw       = d.object(forKey: "agentWindowCornerRaw")       as? Int    ?? WindowCorner.topRight.rawValue
+        agentWindowScreenIndex     = d.object(forKey: "agentWindowScreenIndex")     as? Int    ?? -1
+        agentWindowOpacity         = d.object(forKey: "agentWindowOpacity")         as? Double ?? 0.88
+        agentWindowColorHex        = d.string(forKey: "agentWindowColorHex")                   ?? "#1C1C1E"
+        agentWindowFontSize        = d.object(forKey: "agentWindowFontSize")        as? Double ?? 13.0
     }
 }

@@ -132,6 +132,42 @@
 "update.later" = "Skip This Version";
 "update.download" = "Download Now";
 
+/* Multi-Agent Tab */
+"settings.tab_multiagent" = "Multi-Agent";
+"multiagent.enable" = "Enable Multi-Agent Support";
+"multiagent.enable_help" = "Track multiple running AI agents independently. Each agent identifies itself by its project folder name — no PID or session ID required.";
+"multiagent.section_menubar" = "Menu Bar";
+"multiagent.menu_items" = "Show per-agent status in menu";
+"multiagent.popup_enabled" = "Show popup on status change";
+"multiagent.popup_help" = "A small badge appears below the menu bar icon whenever an agent changes state.";
+"multiagent.popup_duration" = "Popup duration";
+"multiagent.section_window" = "Status Window";
+"multiagent.window_enabled" = "Show status window";
+"multiagent.window_help" = "A floating window listing all active agents and their current status.";
+"multiagent.window_permanent" = "Keep window always visible";
+"multiagent.window_corner" = "Corner";
+"multiagent.corner_topleft" = "Top Left";
+"multiagent.corner_topright" = "Top Right";
+"multiagent.corner_bottomleft" = "Bottom Left";
+"multiagent.corner_bottomright" = "Bottom Right";
+"multiagent.window_screen" = "Screen";
+"multiagent.window_color" = "Window color";
+"multiagent.window_font_size" = "Font size";
+"multiagent.file_mode_hint" = "In file mode, each agent writes to its own file inside the directory below. The hook snippet in the Integration tab is updated automatically.";
+"multiagent.hud_hide" = "Hide";
+"multiagent.hook_prompt_title" = "Hooks Need to Be Updated";
+"multiagent.hook_prompt_msg" = "Multi-Agent Support requires updated hooks that include the agent name and process ID. Without them, status changes cannot be attributed to individual agents and window focus will not work.\n\nWould you like to reinstall the hooks now?";
+"multiagent.hook_prompt_msg_custom" = "Multi-Agent Support requires updated hook commands that include the agent name and process ID. Please copy the updated snippet from the Integration tab and update your hooks manually.";
+"multiagent.hook_prompt_install" = "Reinstall Hooks";
+"multiagent.hook_prompt_later" = "Later";
+"multiagent.hook_prompt_ok" = "OK";
+
+/* Agent Status Labels */
+"status.busy" = "Busy";
+"status.waiting" = "Waiting";
+"status.done" = "Done";
+"status.idle" = "Idle";
+
 /* Menu Bar */
 "menu.server_port_in_use" = "⚠ Port %d in use – Open Settings";
 "menu.server_starting_warn" = "⚠ HTTP server starting…";
@@ -140,6 +176,7 @@
 "menu.test_done" = "Test: Done";
 "menu.test_idle" = "Test: Idle";
 "menu.about" = "About";
+"menu.hide_frame" = "Hide Frame";
 "menu.settings" = "Settings…";
 "menu.support_kofi" = "Support on Ko-fi";
 "menu.quit" = "Quit";

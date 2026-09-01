@@ -18,6 +18,16 @@ jobs:
       - name: Extract version from tag
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES=$(awk "/^## \[$VERSION\]/{found=1; next} found && /^## /{exit} found{print}" CHANGELOG.md \
+            | sed '/^[[:space:]]*---[[:space:]]*$/d' \
+            | sed '/^[[:space:]]*$/N;/^\n$/d')
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Build DMG
         run: make release VERSION=${{ env.VERSION }}
 
@@ -28,4 +38,4 @@ jobs:
           gh release create "${{ github.ref_name }}" \
             "AgentFrame-${{ env.VERSION }}.dmg" \
             --title "AgentFrame ${{ env.VERSION }}" \
-            --generate-notes
+            --notes "${{ env.RELEASE_NOTES }}"
