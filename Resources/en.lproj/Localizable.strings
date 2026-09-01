@@ -176,6 +176,7 @@
 "menu.test_done" = "Test: Done";
 "menu.test_idle" = "Test: Idle";
 "menu.about" = "About";
+"menu.hide_frame" = "Hide Frame";
 "menu.settings" = "Settings…";
 "menu.support_kofi" = "Support on Ko-fi";
 "menu.quit" = "Quit";

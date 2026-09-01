@@ -7,6 +7,7 @@ final class FrameOverlayManager {
     private let flashCtrl           = FlashWindowController()
     private let settings:             AppSettings
     private var currentStatus:        AgentStatus = .idle
+    private(set) var isPaused = false
     private var mouseTrackingTimer:   DispatchSourceTimer?
 
     init(settings: AppSettings) {
@@ -15,7 +16,13 @@ final class FrameOverlayManager {
 
     // MARK: - Public
 
+    func pauseUntilNextUpdate() {
+        isPaused = true
+        overlayWindow?.orderOut(nil)
+    }
+
     func update(status: AgentStatus) {
+        isPaused = false
         currentStatus = status
         viewModel.apply(status: status, settings: settings)
 

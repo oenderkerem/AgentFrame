@@ -23,7 +23,8 @@ struct AgentStatusView: View {
     let settings: AppSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 0) {
+            // Status window
             VStack(alignment: .leading, spacing: 5) {
                 ForEach(model.items) { item in
                     AgentRow(item: item, settings: settings) {
@@ -32,29 +33,52 @@ struct AgentStatusView: View {
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color(nsColor: settings.agentWindowNSColor).opacity(settings.agentWindowOpacity))
+            )
 
-            Divider()
-                .background(Color.white.opacity(0.12))
-                .padding(.horizontal, 10)
-
-            Button {
+            // Hide button – standalone element below, same width as status window
+            HideButton(label: settings.t("multiagent.hud_hide"), settings: settings) {
                 model.onHide?()
-            } label: {
-                Text(settings.t("multiagent.hud_hide"))
-                    .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .padding(.top, 8)
         }
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(nsColor: settings.agentWindowNSColor).opacity(settings.agentWindowOpacity))
-        )
+    }
+}
+
+private struct HideButton: View {
+    let label: String
+    let settings: AppSettings
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(isHovered ? 1.0 : 0.9))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(Color(nsColor: settings.agentWindowNSColor)
+                            .opacity(isHovered
+                                ? min(settings.agentWindowOpacity + 0.15, 1.0)
+                                : settings.agentWindowOpacity))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7)
+                                .stroke(Color.white.opacity(isHovered ? 0.45 : 0.25), lineWidth: 0.5)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { inside in
+            isHovered = inside
+            if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
     }
 }
 

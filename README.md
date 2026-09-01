@@ -26,6 +26,7 @@ A lightweight macOS menu bar app that draws a colored border around your screen 
 - Status input via **HTTP** (default port 7842) or **file watching** — your choice
 - Installed hooks visible in Settings with one-click removal
 - **Multi-agent support** — track multiple agents running in parallel, each identified by its project folder name
+- **Hide Frame** — menu bar action that hides the frame until the next status change, without touching any settings
 - UI available in **English** and **German**
 
 ### How the app looks like
@@ -244,6 +245,7 @@ Each agent identifies itself by its project folder name (`basename $PWD`). If tw
 | Per-agent status items | Menu bar dropdown | Toggle in Settings → Multi-Agent |
 | Status change popup | Below menu bar icon | Toggle + duration in Settings → Multi-Agent |
 | HUD window | Corner of any screen | Toggle, corner, screen, color, opacity, font size |
+| Hide Frame | Menu bar → "Hide Frame" | Hides the frame until the next status change |
 
 ### Focusing the agent's window
 
@@ -277,16 +279,21 @@ Pull requests are welcome. For larger changes, open an issue first to discuss wh
 
 ### Releasing a new version
 
-Releases are automated via GitHub Actions. To publish a new version:
+Releases are automated via GitHub Actions. Steps:
+
+1. Merge the feature branch into `main`
+2. Tag the merge commit on `main` and push the tag:
 
 ```bash
 git tag v<major>.<minor>.<patch>
 git push origin v<major>.<minor>.<patch>
 ```
 
+3. Open the GitHub Release that the workflow creates and paste in the release notes
+
 The workflow will build the app, package it as a DMG, and publish a GitHub Release with the DMG attached. The version number is read from the tag — no manual edits to `Info.plist` or the Makefile required.
 
-The tag must follow the `v<major>.<minor>.<patch>` format and should be pushed from the **main** branch.
+The tag must follow the `v<major>.<minor>.<patch>` format and must be pushed from the **main** branch.
 
 ---
 

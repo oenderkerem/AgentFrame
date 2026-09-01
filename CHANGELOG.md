@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.3.1] - 2026-09-01
+
+### Added
+- **Hide Frame menu item** — new menu bar action "Hide Frame" that hides the colored frame immediately until the next status change arrives; no settings change required; item is disabled while the frame is already idle
+
+### Changed
+- **HUD Hide button redesigned** — the button is now a standalone element below the status window (not inside it), full-width, with visible background, hover state (hand cursor + highlight), and larger font for better readability
+- **Status label and server port combined** — when HTTP mode is active, the menu bar status label and the server port indicator are merged into a single line instead of two separate items
+
+---
+
 ## [1.3.0] - 2026-08-06
 
 ### Added

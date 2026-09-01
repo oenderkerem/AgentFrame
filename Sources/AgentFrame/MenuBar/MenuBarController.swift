@@ -58,10 +58,14 @@ final class MenuBarController {
             menu.addItem(.separator())
         }
 
-        // Status label
-        let labelItem = NSMenuItem(title: statusTitle(for: statusMonitor.currentStatus), action: nil, keyEquivalent: "")
+        // Status label (combined with server port when HTTP is active)
+        let labelItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         labelItem.isEnabled = false
         labelItem.tag = MenuTag.statusLabel.rawValue
+        let httpActive = settings.integrationMode == .http || settings.integrationMode == .both
+        labelItem.attributedTitle = httpActive
+            ? statusWithPortString(for: statusMonitor.currentStatus)
+            : NSAttributedString(string: statusTitle(for: statusMonitor.currentStatus))
         menu.addItem(labelItem)
 
         // Per-agent items (multi-agent mode)
@@ -78,14 +82,6 @@ final class MenuBarController {
             }
         }
 
-        // Server status
-        if settings.integrationMode == .http || settings.integrationMode == .both {
-            let serverItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-            serverItem.isEnabled = false
-            serverItem.attributedTitle = serverStatusString()
-            menu.addItem(serverItem)
-        }
-
         menu.addItem(.separator())
 
         if let version = updateChecker.availableVersion {
@@ -98,6 +94,12 @@ final class MenuBarController {
             menu.addItem(updateItem)
             menu.addItem(.separator())
         }
+
+        let hideFrameItem = NSMenuItem(title: settings.t("menu.hide_frame"),
+                                       action: #selector(hideFrameUntilNextUpdate), keyEquivalent: "")
+        hideFrameItem.target = self
+        hideFrameItem.isEnabled = statusMonitor.currentStatus != .idle
+        menu.addItem(hideFrameItem)
 
         let settingsItem = NSMenuItem(title: settings.t("menu.settings"),
                                       action: #selector(openSettings), keyEquivalent: ",")
@@ -129,34 +131,40 @@ final class MenuBarController {
     // MARK: - Status updates
 
     func updateStatus(_ status: AgentStatus) {
-        statusItem.menu?.item(withTag: MenuTag.statusLabel.rawValue)?.title = statusTitle(for: status)
+        guard let item = statusItem.menu?.item(withTag: MenuTag.statusLabel.rawValue) else { return }
+        let httpActive = settings.integrationMode == .http || settings.integrationMode == .both
+        item.attributedTitle = httpActive
+            ? statusWithPortString(for: status)
+            : NSAttributedString(string: statusTitle(for: status))
     }
 
-    private func serverStatusString() -> NSAttributedString {
-        let font = NSFont.menuFont(ofSize: 0)
+    private func statusWithPortString(for status: AgentStatus) -> NSAttributedString {
+        let font  = NSFont.menuFont(ofSize: 0)
         let small = NSFont.menuFont(ofSize: NSFont.smallSystemFontSize)
+        let str   = NSMutableAttributedString(
+            string: statusTitle(for: status),
+            attributes: [.font: font, .foregroundColor: NSColor.labelColor])
 
+        let dotColor: NSColor
+        let portText: String
         if statusMonitor.httpServerRunning {
-            let str = NSMutableAttributedString(
-                string: "● ",
-                attributes: [.foregroundColor: NSColor.systemGreen, .font: font])
-            str.append(NSAttributedString(
-                string: "Port \(settings.httpPort)",
-                attributes: [.foregroundColor: NSColor.secondaryLabelColor, .font: small]))
-            return str
+            dotColor = .systemGreen
+            portText = "Port \(settings.httpPort)"
         } else if statusMonitor.httpServerError != nil {
-            let str = NSMutableAttributedString(
-                string: "● ",
-                attributes: [.foregroundColor: NSColor.systemRed, .font: font])
-            str.append(NSAttributedString(
-                string: String(format: settings.t("menu.server_port_unavailable"), settings.httpPort),
-                attributes: [.foregroundColor: NSColor.secondaryLabelColor, .font: small]))
-            return str
+            dotColor = .systemRed
+            portText = String(format: settings.t("menu.server_port_unavailable"), settings.httpPort)
         } else {
-            return NSAttributedString(
-                string: "◌ \(settings.t("menu.server_starting"))",
-                attributes: [.foregroundColor: NSColor.secondaryLabelColor, .font: small])
+            dotColor = .secondaryLabelColor
+            portText = settings.t("menu.server_starting")
         }
+
+        str.append(NSAttributedString(
+            string: "   ● ",
+            attributes: [.foregroundColor: dotColor, .font: font]))
+        str.append(NSAttributedString(
+            string: portText,
+            attributes: [.foregroundColor: NSColor.secondaryLabelColor, .font: small]))
+        return str
     }
 
     @objc private func focusAgent(_ sender: NSMenuItem) {
@@ -204,6 +212,10 @@ final class MenuBarController {
     }
 
     // MARK: - Actions
+
+    @objc private func hideFrameUntilNextUpdate() {
+        overlayManager.pauseUntilNextUpdate()
+    }
 
     @objc private func openUpdate() {
         guard let delegate = NSApp.delegate as? AppDelegate else {
